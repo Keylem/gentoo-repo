@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>keylem@users.noreply.github.com</email>
+    <name>Keylem</name>
+  </maintainer>
+  <longdescription>
+    KaiT2en provides Linux support tooling for Apple T2 hardware, including
+    kernel modules, userspace utilities, and systemd-integrated services.
+  </longdescription>
+  <upstream>
+    <remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id>
+  </upstream>
+</pkgmetadata>
