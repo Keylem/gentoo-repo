@@ -78,7 +78,7 @@ exit 97
     p = subprocess.run(["bash", str(renamer), str(fixture), str(source), str(output)],
                        capture_output=True)
     assert p.returncode == 0, p.stderr
-    assert output.read_text() == f"renamed:{source}\\n"
+    assert output.read_text().splitlines() == [f"renamed:{source}"]
     assert b"Invalid option" not in p.stderr
 
     fixture.write_text("#!/usr/bin/env bash\necho missing-renamer\n")
