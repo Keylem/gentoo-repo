@@ -389,3 +389,5 @@ sys-kernel/kait2en-kernel-patches
 sys-kernel/kait2en-sources
 sys-kernel/kait2en-kernel-openzfs
 ```
+
+The bundled helper `dev-util/dmg2img` is installed as a Portage dependency of `app-misc/kait2en-wifi-tools`.
