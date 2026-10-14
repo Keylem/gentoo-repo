@@ -23,6 +23,7 @@ src_install() {
 	newbin "${FILESDIR}/kait2en-wifi-setup" kait2en-wifi-setup
 	exeinto /usr/libexec/kait2en-wifi
 	newexe "${FILESDIR}/validate.py" validate.py
+	newexe "${FILESDIR}/rename-pinned-firmware.sh" rename-pinned-firmware.sh
 }
 pkg_postinst() {
 	elog "Wi-Fi firmware download is NOT automatic. Connect via USB tethering or Ethernet."
