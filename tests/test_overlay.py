@@ -82,4 +82,7 @@ assert "sys-firmware/kait2en-wifi-firmware" in readme
 assert "fetch-macOS-v2.py" in readme
 for path in ("app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup",):
     subprocess.run(["bash", "-n", str(ROOT / path)], check=True)
+power_tune = (ROOT / "app-misc/t2-power-tune/t2-power-tune-9999.ebuild").read_text()
+for native in ("gui-libs/gtk:4[introspection]", "gui-libs/libadwaita:1[introspection]", "x11-libs/gdk-pixbuf:2[introspection]"):
+    assert native in power_tune
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")
