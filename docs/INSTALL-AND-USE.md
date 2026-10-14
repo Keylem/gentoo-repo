@@ -276,14 +276,14 @@ as a built-in mainline kernel Kconfig option.
 
 ```sh
 sudo mkdir -p /etc/portage/package.use
-printf 'sys-kernel/installkernel dracut\n' |
+printf 'sys-kernel/installkernel dracut\nsys-fs/zfs dist-kernel modules\n' |
     sudo tee /etc/portage/package.use/kait2en-initramfs
 sudo emerge -av sys-kernel/installkernel
 sudo emerge -av sys-kernel/kait2en-kernel-openzfs
 ```
 
 The metapackage depends on `sys-kernel/gentoo-kernel` and
-`sys-fs/zfs[modules,dist-kernel]`. If using patches, inspect/test the
+`sys-fs/zfs[modules,dist-kernel]`. Enable the `dist-kernel` and `modules` USE flags for `sys-fs/zfs` as demonstrated above. If using patches, inspect/test the
 specific upstream series with `kait2en-kernel-preflight SOURCE_TREE`,
 then deliberately stage them under the **distribution kernel** user-patch
 directory `/etc/portage/patches/sys-kernel/gentoo-kernel/` before emerging.

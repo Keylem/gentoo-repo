@@ -168,3 +168,7 @@ Fedora/Koji graphical application. The installed patch series is experimental;
 release**. For ZFS-root systems, verify the kernel, zfs.ko, initramfs,
 bootloader and an older bootable entry before rebooting. Consult the full
 per-application guide at [docs/INSTALL-AND-USE.md](docs/INSTALL-AND-USE.md).
+
+For optional `kernel-zfs` mode, explicitly enable
+`sys-fs/zfs dist-kernel modules` in `/etc/portage/package.use/`
+so Portage does not require an interactive USE-flag resolution step.
