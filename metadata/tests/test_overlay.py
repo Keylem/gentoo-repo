@@ -85,4 +85,17 @@ for path in ("app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup",):
 power_tune = (ROOT / "app-misc/t2-power-tune/t2-power-tune-9999.ebuild").read_text()
 for native in ("gui-libs/gtk:4[introspection]", "gui-libs/libadwaita:1[introspection]", "x11-libs/gdk-pixbuf:2[introspection]"):
     assert native in power_tune
+# Portage source phases do not expose EROOT. The firmware has already been
+# staged in the host cache; it must not interpolate an undefined target root.
+firmware_ebuild = (ROOT / "sys-firmware/kait2en-wifi-firmware/kait2en-wifi-firmware-1.0.ebuild").read_text()
+firmware_unpack = firmware_ebuild.split("src_unpack() {", 1)[1].split("src_install()", 1)[0]
+assert 'local archive="/var/cache/kait2en-wifi/firmware.tar"' in firmware_unpack
+assert "${EROOT}" not in firmware_unpack and "${EROOT%/}" not in firmware_unpack
+
+# systemd_get_systemunitdir includes EPREFIX, while Portage's insinto adds
+# EPREFIX again. Strip it to avoid breaking prefix installations.
+touchid = (ROOT / "app-misc/t2-touchid/t2-touchid-9999.ebuild").read_text()
+assert 'systemunitdir=$(systemd_get_systemunitdir)' in touchid
+assert 'insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"' in touchid
+
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")
