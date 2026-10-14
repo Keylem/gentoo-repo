@@ -21,7 +21,7 @@ RDEPEND="
     app-misc/kait2en-assets
     gui-libs/gtk:4
     gui-libs/libadwaita:1
-    sys-apps/polkit
+    sys-auth/polkit
     
     
     

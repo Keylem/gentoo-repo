@@ -28,16 +28,19 @@ jobs:
                 atom="${atom%/*}"
                 printf "%s **\n" "${atom}" >> /etc/portage/package.accept_keywords/kait2en
               done
+              export FEATURES="${FEATURES:-} -ipc-sandbox -network-sandbox -pid-sandbox"
               echo ":: Portage pretend plans, one independent package at a time"
+              failures=0
               while IFS= read -r atom; do
                 [[ -n ${atom} ]] || continue
                 echo ":: Checking ${atom}"
                 if ! emerge --pretend --oneshot --verbose "${atom}" > /tmp/kait2en-plan 2>&1; then
                   cat /tmp/kait2en-plan
-                  exit 1
+                  failures=$(( failures + 1 ))
                 fi
               done < <(sed "s/ \*\*$//" /etc/portage/package.accept_keywords/kait2en | sort -u)
               echo ":: Checking all default metapackage dependencies"
-              emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 || { cat /tmp/kait2en-plan; exit 1; }
+              emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 || { cat /tmp/kait2en-plan; failures=$(( failures + 1 )); }
+              if (( failures > 0 )); then echo "FAIL: $failures Portage dependency plans failed" >&2; exit 1; fi
               echo "PASS: Portage resolved independently installable package metadata and default metapackage"
             '

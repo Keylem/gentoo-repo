@@ -13,7 +13,7 @@ SLOT="0"
 KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-power-tune.service"
 S="${EGIT_CHECKOUT_DIR}/apps/t2-power-tune"
-RDEPEND="app-misc/kait2en-assets dev-python/pygobject gui-libs/gtk:4 gui-libs/libadwaita:1 sys-apps/pciutils sys-apps/polkit sys-apps/systemd"
+RDEPEND="app-misc/kait2en-assets dev-python/pygobject gui-libs/gtk:4 gui-libs/libadwaita:1 sys-apps/pciutils sys-auth/polkit sys-apps/systemd"
 src_prepare() {
     default
     sed -i 's@/usr/local/@/usr/@g' "${S}/t2-power-tune.py" \
