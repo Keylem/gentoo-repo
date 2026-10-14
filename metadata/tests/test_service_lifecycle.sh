@@ -5,6 +5,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "${tmp}"' EXIT
 log=${tmp}/calls
+inherit() { :; } # Portage supplies inherit; the offline mock does not.
 systemd_is_booted() { return 0; }
 systemctl() { printf '%s\n' "$*" >> "${log}"; return 0; }
 ewarn() { :; }
