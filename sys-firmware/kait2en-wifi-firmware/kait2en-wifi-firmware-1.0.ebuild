@@ -16,7 +16,8 @@ RDEPEND="app-misc/kait2en-wifi-tools"
 
 src_unpack() {
     python_setup
-    local archive="${EROOT%/}/var/cache/kait2en-wifi/firmware.tar"
+    # EROOT is not defined during src_* phases; staging is host-local.
+    local archive="/var/cache/kait2en-wifi/firmware.tar"
     [[ -r ${archive} ]] || die "No local firmware archive! Run kait2en-wifi-setup prepare and sudo kait2en-wifi-setup stage."
     mkdir -p "${S}" || die
     "${PYTHON}" "${FILESDIR}/validate.py" "${archive}" --extract-to "${S}" ||
