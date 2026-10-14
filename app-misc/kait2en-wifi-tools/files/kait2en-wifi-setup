@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# Copyright 2026 Gentoo Authors; GPL-3.0-or-later
+# This utility never downloads firmware during an emerge. All actions are opt-in.
+set -Eeuo pipefail
+OSX_COMMIT=4c378a4b5e0b219783683012bec680325eb40719
+T2_COMMIT=986f5a79d43b75d93d84b8d57bc338853b51a0e0
+OSX_URL="https://raw.githubusercontent.com/kholia/OSX-KVM/${OSX_COMMIT}/fetch-macOS-v2.py"
+T2_URL="https://raw.githubusercontent.com/t2linux/wiki/${T2_COMMIT}/docs/tools/firmware.sh"
+VALIDATOR=/usr/libexec/kait2en-wifi/validate.py
+STAGED=/var/cache/kait2en-wifi/firmware.tar
+usage() {
+cat <<'EOF'
+KaiT2en Wi-Fi on pure Gentoo Linux (no installed macOS required)
+  kait2en-wifi-setup prepare [monterey|ventura|sonoma]
+  sudo kait2en-wifi-setup stage /path/to/firmware.tar
+  kait2en-wifi-setup status
+
+1. Connect using USB tethering or wired Ethernet.
+2. Run prepare as your normal (non-root) desktop user. This downloads
+   Apple's recovery image and extracts Broadcom Wi-Fi/Bluetooth firmware.
+   Recovery can be ~650 MB; allow several GB disk space. The open-source
+   downloader and extractor are pinned to reviewed GitHub commits.
+3. Stage the produced tar with sudo, then run:
+      sudo emerge -av sys-firmware/kait2en-wifi-firmware
+4. Reboot and connect to Wi-Fi in NetworkManager.
+
+The Apple binaries remain locally supplied and are never redistributed by
+the overlay. Verify Apple's licensing terms before downloading.
+EOF
+}
+die() { echo "Error: $*" >&2; exit 1; }
+needs() { command -v "$1" >/dev/null || die "Missing $1. Install its Gentoo package first."; }
+cleanup() {
+    local status=$?
+    trap - EXIT HUP INT TERM
+    if [[ -n ${mount_dir:-} ]] && mountpoint -q -- "$mount_dir"; then
+        sudo umount -- "$mount_dir" || echo "Warning: umount failed" >&2
+    fi
+    if [[ -n ${loopdev:-} ]]; then
+        sudo losetup -d -- "$loopdev" || echo "Warning: loop detach failed" >&2
+    fi
+    if [[ -n ${tmp:-} && -d ${tmp} ]]; then rm -rf -- "$tmp"; fi
+    exit "$status"
+}
+prepare() {
+    (( EUID != 0 )) || die 'Run prepare as your normal desktop user (not root).'
+    local version=${1:-sonoma} part found=0 out
+    case $version in monterey|ventura|sonoma) ;; *) die 'Choose monterey, ventura or sonoma' ;; esac
+    for cmd in python3 curl dmg2img sudo losetup lsblk mount mountpoint umount tar awk; do needs "$cmd"; done
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}/kait2en-wifi.XXXXXXXX")
+    chmod 0700 "$tmp"
+    trap cleanup EXIT HUP INT TERM
+    mount_dir="$tmp/mounted"
+    mkdir -p -- "$mount_dir"
+    echo "Downloading pinned tools and Apple recovery image..."
+    curl --fail --location --show-error --silent --proto '=https' --tlsv1.2 "$OSX_URL" -o "$tmp/fetch-macOS-v2.py" || die 'Unable to fetch recovery utility'
+    curl --fail --location --show-error --silent --proto '=https' --tlsv1.2 "$T2_URL" -o "$tmp/firmware.sh" || die 'Unable to fetch firmware extractor'
+    python3 -m py_compile "$tmp/fetch-macOS-v2.py" || die 'Downloaded Python file invalid'
+    bash -n "$tmp/firmware.sh" || die 'Downloaded firmware extractor invalid'
+    ( cd -- "$tmp" && python3 fetch-macOS-v2.py -s "$version" ) || die 'Apple recovery download/signature verification failed'
+    [[ -s $tmp/BaseSystem.dmg ]] || die 'The selected recovery did not produce BaseSystem.dmg'
+    dmg2img -s "$tmp/BaseSystem.dmg" "$tmp/BaseSystem.img" || die 'DMG conversion failed'
+    loopdev=$(sudo losetup --find --show --read-only --partscan "$tmp/BaseSystem.img") || die 'Loop setup failed'
+    [[ $loopdev == /dev/loop* ]] || die 'Invalid loop device'
+    # Only mount recovery image read-only with no executable or suid permission.
+    while read -r part; do
+        [[ $part == /dev/* ]] || continue
+        if sudo mount -o ro,nosuid,nodev,noexec -- "$part" "$mount_dir" 2>/dev/null; then
+            if [[ -d $mount_dir/usr/share/firmware/wifi ]]; then found=1; break; fi
+            sudo umount -- "$mount_dir"
+        fi
+    done < <(lsblk -nrpo NAME,TYPE "$loopdev" | awk '$2 == "part" {print $1}')
+    if (( found == 0 )); then
+        if sudo mount -o ro,nosuid,nodev,noexec -- "$loopdev" "$mount_dir" 2>/dev/null &&
+           [[ -d $mount_dir/usr/share/firmware/wifi ]]; then
+            found=1
+        fi
+    fi
+    (( found == 1 )) || die 'No firmware tree in image. Try a different version (Monterey/Ventura/Sonoma).'
+    # The t2linux rename_only subcommand never installs files or requires root.
+    ( cd -- "$tmp" && bash firmware.sh rename_only "$mount_dir/usr/share/firmware" "$tmp/firmware.tar" ) ||
+        die 'The upstream firmware renamer failed'
+    python3 "$VALIDATOR" "$tmp/firmware.tar" || die 'No valid Broadcom Wi-Fi files extracted'
+    out="${XDG_CACHE_HOME:-$HOME/.cache}/kait2en-wifi"
+    mkdir -p -- "$out"
+    chmod 0700 -- "$out"
+    install -m 0600 -- "$tmp/firmware.tar" "$out/firmware.tar"
+    printf 'Prepared %s/firmware.tar\n' "$out"
+    printf 'Next: sudo kait2en-wifi-setup stage %q\n' "$out/firmware.tar"
+    echo 'Then: sudo emerge -av sys-firmware/kait2en-wifi-firmware'
+}
+stage() {
+    (( EUID == 0 )) || die 'Run stage with sudo/root'
+    [[ $# == 1 && -f $1 && ! -L $1 ]] || die 'Provide an ordinary firmware.tar path'
+    python3 "$VALIDATOR" "$1" || die 'Unacceptable Broadcom firmware archive'
+    mkdir -p -m 0700 -- "$(dirname "$STAGED")"
+    local temp
+    temp=$(mktemp "${STAGED}.XXXXXXXX")
+    install -m 0600 -- "$1" "$temp"
+    mv -f -- "$temp" "$STAGED"
+    echo 'Staged for Portage. Run: sudo emerge -av sys-firmware/kait2en-wifi-firmware'
+}
+case ${1:-help} in
+    help|-h|--help) usage ;;
+    prepare) (( $# <= 2 )) || die 'Too many arguments'; prepare "${2:-sonoma}" ;;
+    stage) (( $# == 2 )) || die 'Usage: sudo kait2en-wifi-setup stage firmware.tar'; stage "$2" ;;
+    status)
+        [[ -f $STAGED ]] && echo "Staged archive: $STAGED" || echo 'No firmware archive staged'
+        echo 'To inspect Wi-Fi: nmcli device status; journalctl -k -b | grep brcmfmac'
+        ;;
+    *) usage >&2; exit 2 ;;
+esac
