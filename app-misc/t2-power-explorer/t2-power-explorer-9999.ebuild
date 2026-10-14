@@ -29,6 +29,7 @@ RDEPEND="
     sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
+BDEPEND="virtual/pkgconfig"
 
 src_unpack() {
     git-r3_src_unpack

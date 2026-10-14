@@ -138,3 +138,8 @@ updated correctly on install, upgrade and removal. The Touch Bar and DSP
 components use `udev.eclass` to reload udev rule databases after merge
 and unmerge. This does not automatically activate/deactivate any hardware
 or restart a user's graphical session.
+
+The optional `app-misc/t2-kernel-builder` does not force installation or replacement
+of an existing kernel: its `build` command explicitly starts an `emerge
+sys-kernel/gentoo-kernel` transaction. Inspect the proposed install plan
+before agreeing, particularly when using ZFS-root or a custom kernel.
