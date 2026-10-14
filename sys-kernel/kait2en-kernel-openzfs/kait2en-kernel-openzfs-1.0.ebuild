@@ -10,7 +10,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 RDEPEND="
     sys-kernel/gentoo-kernel
-    sys-fs/zfs[dist-kernel,modules]
+    >=sys-fs/zfs-2.4[dist-kernel,modules]
     sys-kernel/kait2en-kernel-patches
 "
 S="${WORKDIR}"

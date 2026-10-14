@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
+  <use><flag name="environment">Install optional GTK GSK rendering environment override</flag></use>
   <upstream>
     <remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id>
   </upstream>

@@ -6,7 +6,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd xdg kait2en-systemd xdg
+inherit cargo git-r3 systemd xdg kait2en-systemd
 
 DESCRIPTION="SMC battery and charging controls for T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"

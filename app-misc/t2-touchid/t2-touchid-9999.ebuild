@@ -19,6 +19,8 @@ RESTRICT="test"
 S="${EGIT_CHECKOUT_DIR}/t2-services/t2-touchid"
 
 RDEPEND="
+    >=dev-libs/libinput-1.21
+    virtual/libudev
     
     
     sys-auth/fprintd
@@ -30,6 +32,7 @@ RDEPEND="
     sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
+BDEPEND="virtual/pkgconfig"
 
 src_unpack() {
     git-r3_src_unpack

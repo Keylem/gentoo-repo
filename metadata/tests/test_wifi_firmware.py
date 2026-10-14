@@ -6,7 +6,7 @@ import subprocess
 import tarfile
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 validator = ROOT / "sys-firmware/kait2en-wifi-firmware/files/validate.py"
 
 def archive(path, entries):
@@ -41,4 +41,8 @@ with tempfile.TemporaryDirectory() as tmp:
         archive(bad, entries)
         p = subprocess.run(["python3", str(validator), str(bad)], capture_output=True)
         assert p.returncode != 0, (idx, p.stdout, p.stderr)
+helper = (ROOT / "app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup").read_text()
+assert "sha256sum --check --status" in helper
+assert "39ac6d26bd265f5d32198062f515ad15ef93afb7a74e702be2b008090d5bd5f3" in helper
+assert "c1c1d8aa25bb5f089e46ccd0d9738fc13bfbd784f499aa924466c690f059961e" in helper
 print("PASS: firmware validation accepts actual Broadcom filenames, refuses traversal, links, duplicates, missing Wi-Fi")

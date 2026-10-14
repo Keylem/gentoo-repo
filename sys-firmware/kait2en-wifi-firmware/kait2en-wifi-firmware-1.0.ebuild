@@ -1,6 +1,9 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 EAPI=8
+
+PYTHON_COMPAT=( python3_{12..14} )
+inherit python-any-r1
 DESCRIPTION="Locally extracted Apple Broadcom firmware for T2 Mac Wi-Fi and Bluetooth"
 HOMEPAGE="https://wiki.t2linux.org/guides/wifi-bluetooth/"
 LICENSE="all-rights-reserved"
@@ -8,14 +11,15 @@ SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="fetch mirror bindist strip"
 S="${WORKDIR}/firmware"
-BDEPEND="dev-lang/python"
+BDEPEND="${PYTHON_DEPS}"
 RDEPEND="app-misc/kait2en-wifi-tools"
 
 src_unpack() {
+    python_setup
     local archive="${EROOT%/}/var/cache/kait2en-wifi/firmware.tar"
     [[ -r ${archive} ]] || die "No local firmware archive! Run kait2en-wifi-setup prepare and sudo kait2en-wifi-setup stage."
     mkdir -p "${S}" || die
-    python3 "${FILESDIR}/validate.py" "${archive}" --extract-to "${S}" ||
+    "${PYTHON}" "${FILESDIR}/validate.py" "${archive}" --extract-to "${S}" ||
         die "Unsafe/invalid firmware archive"
 }
 

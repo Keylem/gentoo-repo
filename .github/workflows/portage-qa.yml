@@ -61,5 +61,5 @@ jobs:
               echo "PASS: Portage resolved both optional kernel source and OpenZFS combinations"
 
               echo ":: Testing Portage install / forced reinstall / unmerge on lightweight packages"
-              bash /var/db/repos/keylem/tests/smoke_portage_lifecycle.sh
+              bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh
             '

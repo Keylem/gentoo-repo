@@ -19,6 +19,8 @@ RESTRICT="test"
 S="${EGIT_CHECKOUT_DIR}/apps/t2-touchbar"
 
 RDEPEND="
+    >=dev-libs/libinput-1.21
+    virtual/libudev
     acct-group/kait2en-touchbar
     
     
@@ -29,6 +31,7 @@ RDEPEND="
     sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
+BDEPEND="virtual/pkgconfig"
 
 src_unpack() {
     git-r3_src_unpack

@@ -1,0 +1,33 @@
+name: Gentoo application build smoke
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  gentoo-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        atom:
+          - app-misc/t2-journal
+          - app-misc/t2-fan-control
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and install a Rust daemon or GTK app using real Gentoo Portage
+        env:
+          ATOM: ${{ matrix.atom }}
+        run: |
+          docker run --rm \
+            -e ATOM="${ATOM}" \
+            -v "${GITHUB_WORKSPACE}:/var/db/repos/keylem:ro" \
+            gentoo/stage3:systemd bash -euo pipefail -c '
+              mkdir -p /etc/portage/repos.conf /etc/portage/package.accept_keywords /etc/portage/package.use
+              printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
+              emerge-webrsync
+              echo "*/*::keylem **" > /etc/portage/package.accept_keywords/kait2en
+              printf "media-libs/libglvnd X\nnet-wireless/wpa_supplicant dbus\nsys-apps/systemd policykit\nmedia-libs/freetype harfbuzz\nx11-libs/cairo X\n" > /etc/portage/package.use/kait2en
+              export FEATURES="${FEATURES:-} -network-sandbox -ipc-sandbox -pid-sandbox"
+              emerge --ask=n --verbose --oneshot --jobs=2 --load-average=2 "${ATOM}"
+              echo "PASS: actual Rust build + install for ${ATOM}"
+            '

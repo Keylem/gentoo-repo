@@ -5,7 +5,7 @@ import re
 import subprocess
 import xml.etree.ElementTree as ET
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 rust = ("t2-fan-control","t2-force-click","t2-smc-control","t2-power-explorer",
         "t2-zone-power","t2-dgpu-control","t2-hybrid-gpu-control",
         "kait2en-touchbar","t2-journal","t2-ave","t2-touchid")
@@ -23,6 +23,9 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     actual.add(package)
     data = ebuild.read_text()
     assert re.search(r"^EAPI=8$", data, re.M), ebuild
+    for inherit in re.findall(r"^inherit (.*)$", data, re.M):
+        classes = inherit.split()
+        assert len(classes) == len(set(classes)), f"duplicate eclass inherit: {ebuild}"
     assert "src_install()" in data or package != "app-misc/kait2en", ebuild
     assert "/opt/kait2en" not in data, ebuild
     assert "install.sh" not in data, ebuild
@@ -66,7 +69,7 @@ for name in ("t2-fan-control", "t2-force-click", "t2-smc-control", "t2-power-exp
 for name in ("kait2en-touchbar", "t2-dsp"):
     eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
     assert "udev_reload" in eb, name
-doc = (ROOT / "docs/INSTALL-AND-USE.md").read_text()
+doc = (ROOT / "metadata/docs/INSTALL-AND-USE.md").read_text()
 for package in expected:
     if package != "acct-group/kait2en-touchbar":
         assert package.split("/")[-1] in doc, f"Not documented: {package}"
@@ -79,4 +82,7 @@ assert "sys-firmware/kait2en-wifi-firmware" in readme
 assert "fetch-macOS-v2.py" in readme
 for path in ("app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup",):
     subprocess.run(["bash", "-n", str(ROOT / path)], check=True)
+power_tune = (ROOT / "app-misc/t2-power-tune/t2-power-tune-9999.ebuild").read_text()
+for native in ("gui-libs/gtk:4[introspection]", "gui-libs/libadwaita:1[introspection]", "x11-libs/gdk-pixbuf:2[introspection]"):
+    assert native in power_tune
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

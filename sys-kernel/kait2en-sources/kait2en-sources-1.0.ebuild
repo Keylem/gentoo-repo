@@ -12,7 +12,7 @@ IUSE="openzfs"
 RDEPEND="
     sys-kernel/gentoo-sources
     sys-kernel/kait2en-kernel-patches
-    openzfs? ( sys-fs/zfs[modules] )
+    openzfs? ( >=sys-fs/zfs-2.4[modules] )
 "
 S="${WORKDIR}"
 src_install() { :; }

@@ -166,7 +166,7 @@ sudo emerge -av sys-kernel/kait2en-t2smc
 ```
 
 Additional individually packaged drivers (BCE, Touch Bar, trackpad, GPU and
-others) are described in the [complete component guide](docs/INSTALL-AND-USE.md).
+others) are described in the [complete component guide](metadata/docs/INSTALL-AND-USE.md).
 These are external modules built for Gentoo's selected kernel.
 
 ### Step 6 — Install the apps
@@ -204,7 +204,7 @@ sudo systemctl enable --now t2-fancontrol.service
 | GPU switching | `app-misc/t2-dgpu-control` **or** `app-misc/t2-hybrid-gpu-control` | Check exact Mac model and kernel patch compatibility |
 | Kernel helper | `app-misc/t2-kernel-builder` | Run `t2-kernel-builder help` |
 
-The [complete guide](docs/INSTALL-AND-USE.md) has the commands and model
+The [complete guide](metadata/docs/INSTALL-AND-USE.md) has the commands and model
 restrictions for all of these. Don't enable GPU switching on an unsupported Mac.
 
 ### Step 8 — Optional Gentoo kernel sources or OpenZFS
@@ -228,7 +228,7 @@ These metapackages **stage** T2 kernel patches; they don't apply unverified
 patches automatically. Use `kait2en-kernel-preflight` to check applicability.
 If you boot from ZFS, test the exact kernel/ZFS version and initramfs before
 switching your default boot entry. Keep your previous bootable kernel.
-See [the advanced kernel guide](docs/INSTALL-AND-USE.md#9-kernel-installation-option-b--portage-kernel-with-openzfs).
+See [the advanced kernel guide](metadata/docs/INSTALL-AND-USE.md#9-kernel-installation-option-b--portage-kernel-with-openzfs).
 
 ### Step 9 — Update or undo your changes
 
@@ -255,7 +255,7 @@ or reboot unless an alternative firmware is present.
 
 ## More detailed instructions
 
-- **[All applications, systemd services, kernels, OpenZFS and troubleshooting](docs/INSTALL-AND-USE.md)**
+- **[All applications, systemd services, kernels, OpenZFS and troubleshooting](metadata/docs/INSTALL-AND-USE.md)**
 - [Official Gentoo Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64)
 - [T2 Linux pre-install boot-security instructions](https://wiki.t2linux.org/guides/preinstall/)
 - [T2 Linux Wi-Fi and Bluetooth firmware documentation](https://wiki.t2linux.org/guides/wifi-bluetooth/)
