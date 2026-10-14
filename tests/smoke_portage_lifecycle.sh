@@ -22,4 +22,28 @@ test_atom() {
 test_atom app-misc/t2-kernel-builder /usr/bin/t2-kernel-builder
 test_atom app-misc/kait2en-assets /usr/share/kait2en/kait2en-wordmark.png
 test_atom sys-kernel/kait2en-kernel-patches /usr/bin/kait2en-kernel-preflight
-echo "PASS: lightweight Portage packages install, reinstall, and unmerge cleanly"
+# Build and install the real DMG conversion utility (not only pretend metadata).
+test_atom dev-util/dmg2img /usr/bin/dmg2img
+test_atom app-misc/kait2en-wifi-tools /usr/bin/kait2en-wifi-setup
+
+# Generate benign test bytes; never download or distribute proprietary Apple
+# firmware in CI. Real Portage unpack/install/unmerge must still work.
+mkdir -p -m 0700 /var/cache/kait2en-wifi
+python3 - <<'PY'
+import io
+import tarfile
+path = "/var/cache/kait2en-wifi/firmware.tar"
+with tarfile.open(path, "w") as tar:
+    data = b"synthetic test payload, NOT real Apple firmware"
+    info = tarfile.TarInfo("brcmfmac4377b3-pcie.apple.bin")
+    info.size = len(data)
+    tar.addfile(info, io.BytesIO(data))
+PY
+test_atom sys-firmware/kait2en-wifi-firmware /lib/firmware/brcm/brcmfmac4377b3-pcie.apple.bin
+# The original staged archive is not package-owned and must survive unmerge.
+[[ -s /var/cache/kait2en-wifi/firmware.tar ]] ||
+    { echo "FAIL: Portage unexpectedly removed user-staged firmware" >&2; exit 1; }
+rm -f /var/cache/kait2en-wifi/firmware.tar
+rmdir /var/cache/kait2en-wifi
+echo "PASS: real Portage install/reinstall/unmerge including synthetic Wi-Fi firmware"
+

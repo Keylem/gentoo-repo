@@ -12,6 +12,7 @@ RDEPEND="
     dev-util/dmg2img
     net-misc/curl
     app-admin/sudo
+    sys-apps/coreutils
     sys-apps/util-linux
 "
 src_install() {
