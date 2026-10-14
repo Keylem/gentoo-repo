@@ -45,4 +45,10 @@ for package in expected - {"app-misc/kait2en"}:
         continue  # separately installable, not in the default metapackage
     assert package in meta, f"metapackage missing {package}"
 assert "?? ( discrete-gpu hybrid-gpu )" in meta
+assert "openzfs? ( sys-fs/zfs )" in meta
+for name in ("t2-fan-control", "t2-force-click", "t2-smc-control", "t2-zone-power", "t2-dgpu-control", "t2-ave", "t2-touchid", "t2-services-common", "kait2en-touchbar", "t2-power-tune"):
+    eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
+    assert "kait2en_systemd_pkg_prerm" in eb, name
+    assert "kait2en_systemd_pkg_postrm" in eb, name
+    assert "KAIT2EN_SYSTEMD_UNITS=" in eb, name
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

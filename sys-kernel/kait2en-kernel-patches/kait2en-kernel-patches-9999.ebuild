@@ -11,13 +11,15 @@ HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
+RDEPEND="sys-devel/patch sys-apps/kmod"
 S="${EGIT_CHECKOUT_DIR}/patches/runtime/gpu-runtime-pm"
 src_install() {
     insinto /usr/share/kait2en/kernel-patches/gpu-runtime-pm
     doins "${S}/series" "${S}"/*.patch
+    newbin "${FILESDIR}/kait2en-kernel-preflight" kait2en-kernel-preflight
 }
 pkg_postinst() {
     elog "Patches are staged under /usr/share/kait2en/kernel-patches, not automatically applied."
-    elog "Review kernel release compatibility before opting into /etc/portage/patches/sys-kernel/gentoo-kernel."
+    elog "Run kait2en-kernel-preflight /usr/src/linux before opting into patches."
     elog "Build kernels through sys-kernel/gentoo-kernel and /etc/kernel/config.d (not Fedora RPM/DKMS)."
 }

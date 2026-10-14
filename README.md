@@ -64,3 +64,69 @@ emerge -pvt app-misc/kait2en
 For **each** live package, perform a real `ebuild path/to/package-9999.ebuild manifest clean unpack prepare compile install` in a Gentoo test system/chroot, including the enabled systemd profile. For hardware/runtime checks test kernel module loading, suspend/resume, and Touch ID **on the exact Mac model**. This repository's structural checks alone do not prove 100% install/runtime compatibility; upstream builds move with `main`, kernel APIs vary, and the Fedora-specific upstream GUI has not been ported.
 
 **Important:** These modules and some kernel patches can affect boot, storage, power management, or suspend. Keep a working fallback kernel/boot entry.
+
+## Clean installs, upgrades, and uninstallations
+
+All package-owned binaries, policy files, icons, unit files, udev rules,
+kernel modules, DSP profiles and upstream patch files are installed into the
+Portage image. No install hook directly copies to `/usr/local` or `/opt`.
+Nothing automatically enables a service or patches the running kernel.
+
+On **first install** choose only the components and compatible GPU model
+you need. To **update**, synchronize the overlay and explicitly rebuild live
+ebuilds (`-9999` packages) to obtain a new upstream revision, preferably
+the entire chosen KaiT2en set together. When a unit file changes, restart
+the service yourself at a suitable maintenance time. The eclass deliberately
+does not stop/disable services during upgrades.
+
+On **unmerge**, the custom systemd lifecycle code stops/disables *system*
+units owned by that package, only for a real running systemd installation
+and only on final unmerge; Portage removes package-owned files. **Per-user**
+units such as `kait2en-touchbar.service` must be disabled from each
+participating account before removing the package:
+
+```bash
+systemctl --user disable --now kait2en-touchbar.service
+sudo emerge --ask --unmerge app-misc/kait2en-touchbar
+```
+
+On the final unmerge of `app-misc/t2-power-tune`, any service created
+interactively by the GUI in `/etc/systemd/system/` must also be reviewed and
+removed manually. Portage must not remove files it did not install. Likewise,
+`CONFIG_PROTECT` may preserve modified files under `/etc`, and application
+state under home folders is *never silently deleted*. Removing only the
+metapackage does **not** remove its independent dependencies: use
+`emerge --ask --depclean` once they are no longer required by any other
+package, and inspect the plan before accepting it.
+
+After an update to a Gentoo kernel, use `USE=dist-kernel`, rebuild external
+modules as needed and regenerate the ZFS-aware initramfs before reboot.
+Always keep an older bootable kernel.
+
+## OpenZFS compatibility gate
+
+The `kernel-patches` package stages the **currently available AMD GPU
+patch series**, not patches to OpenZFS or to the Linux VFS. These files are
+*not* proof of compatibility with every Linux release or OpenZFS build.
+
+```bash
+sudo emerge --ask sys-kernel/gentoo-kernel sys-fs/zfs
+kait2en-kernel-preflight /usr/src/linux
+# Only if the preflight passes and you have reviewed the exact patch series:
+# copy the numbered patch files into /etc/portage/patches/sys-kernel/gentoo-kernel/
+# Rebuild the kernel and OpenZFS for this identical kernel.
+sudo emerge --ask --oneshot sys-kernel/gentoo-kernel sys-fs/zfs
+kait2en-kernel-preflight --installed-zfs KERNEL_RELEASE
+```
+
+Before a ZFS-root reboot, validate `modprobe -S KERNEL_RELEASE -n -v zfs`,
+the initramfs contents and bootloader entry without replacing the working
+fallback. Kernel patch application + `modinfo` do **not** establish mount,
+scrub, snapshot, suspend or rollback safety. Test those on real hardware,
+and never test unreviewed patches against the only copy of a pool.
+
+Gentoo currently ships `sys-fs/zfs` and `sys-fs/zfs-kmod` for different
+packaging flows; do not force both. The optional `openzfs` USE flag on the
+metapackage selects `sys-fs/zfs`, but the operator still has to ensure the
+particular ZFS release supports the selected kernel. `linux-mod-r1` or a
+successful patch dry-run alone does not validate that API relationship.
