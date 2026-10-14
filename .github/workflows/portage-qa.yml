@@ -45,6 +45,17 @@ jobs:
               emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 || { cat /tmp/kait2en-plan; failures=$(( failures + 1 )); }
               if (( failures > 0 )); then echo "FAIL: $failures Portage dependency plans failed" >&2; exit 1; fi
               echo "PASS: Portage resolved independently installable package metadata and default metapackage"
+              echo ":: Checking opt-in kernel-sources metapackage flag"
+              printf 'app-misc/kait2en kernel-sources -kernel-zfs -apps\n' >> /etc/portage/package.use/kait2en-ci
+              emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 ||
+                { cat /tmp/kait2en-plan; exit 1; }
+              echo ":: Checking opt-in distribution-kernel + OpenZFS metapackage flag"
+              sed -i '/^app-misc\/kait2en kernel-sources /d' /etc/portage/package.use/kait2en-ci
+              printf 'app-misc/kait2en kernel-zfs -kernel-sources -apps\n' >> /etc/portage/package.use/kait2en-ci
+              emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 ||
+                { cat /tmp/kait2en-plan; exit 1; }
+              echo "PASS: Portage resolved both optional kernel source and OpenZFS combinations"
+
               echo ":: Testing Portage install / forced reinstall / unmerge on lightweight packages"
               bash /var/db/repos/keylem/tests/smoke_portage_lifecycle.sh
             '
