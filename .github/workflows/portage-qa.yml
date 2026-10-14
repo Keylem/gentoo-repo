@@ -34,7 +34,7 @@ jobs:
               mkdir -p /etc/portage/package.license
               # Explicitly test the user-provided proprietary firmware package,
               # without opening the global ACCEPT_LICENSE policy.
-              printf 'sys-firmware/kait2en-wifi-firmware all-rights-reserved\n' > /etc/portage/package.license/kait2en-wifi
+              printf "sys-firmware/kait2en-wifi-firmware all-rights-reserved\n" > /etc/portage/package.license/kait2en-wifi
               echo ":: Portage pretend plans, one independent package at a time"
               failures=0
               while IFS= read -r atom; do
@@ -50,16 +50,19 @@ jobs:
               if (( failures > 0 )); then echo "FAIL: $failures Portage dependency plans failed" >&2; exit 1; fi
               echo "PASS: Portage resolved independently installable package metadata and default metapackage"
               echo ":: Checking opt-in kernel-sources metapackage flag"
-              printf 'app-misc/kait2en kernel-sources -kernel-zfs -apps\n' >> /etc/portage/package.use/kait2en-ci
+              printf "app-misc/kait2en kernel-sources -kernel-zfs -apps\n" >> /etc/portage/package.use/kait2en-ci
               emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 ||
                 { cat /tmp/kait2en-plan; exit 1; }
               echo ":: Checking opt-in distribution-kernel + OpenZFS metapackage flag"
-              sed -i '/^app-misc\/kait2en kernel-sources /d' /etc/portage/package.use/kait2en-ci
-              printf 'app-misc/kait2en kernel-zfs -kernel-sources -apps\n' >> /etc/portage/package.use/kait2en-ci
+              sed -i "/^app-misc\/kait2en kernel-sources /d" /etc/portage/package.use/kait2en-ci
+              printf "app-misc/kait2en kernel-zfs -kernel-sources -apps\n" >> /etc/portage/package.use/kait2en-ci
               emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 ||
                 { cat /tmp/kait2en-plan; exit 1; }
               echo "PASS: Portage resolved both optional kernel source and OpenZFS combinations"
 
               echo ":: Testing Portage install / forced reinstall / unmerge on lightweight packages"
               bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh
-            '
+              echo "PASS: complete Gentoo Portage QA"
+            ' | tee /tmp/kait2en-portage-qa.log
+          # Fail closed if the shell command exits early or only a portion ran.
+          grep -Fxq 'PASS: complete Gentoo Portage QA' /tmp/kait2en-portage-qa.log
