@@ -12,6 +12,29 @@ all future kernels. Experimental kernel patches must be verified for **each
 kernel release**. Preserve a working bootloader entry and a backup before
 changing drivers or ZFS-root boot.
 
+## Wi-Fi setup with no macOS installed
+
+The optional `app-misc/kait2en-wifi-tools` runs the recovery downloader from
+[kholia/OSX-KVM](https://github.com/kholia/OSX-KVM/blob/master/fetch-macOS-v2.py)
+and the T2 Linux Wi-Fi/Bluetooth renamer. Apple firmware is NOT included in
+any repository; it is obtained on demand from a macOS Recovery image (with a
+temporary wired or USB-tethered Internet connection).
+
+```sh
+sudo emerge -av app-misc/kait2en-wifi-tools
+kait2en-wifi-setup prepare sonoma
+sudo kait2en-wifi-setup stage "$HOME/.cache/kait2en-wifi/firmware.tar"
+sudo emerge -av sys-firmware/kait2en-wifi-firmware
+sudo reboot
+```
+
+Portage installs and uninstalls the final `brcmfmac` firmware files.
+The optional `dev-util/dmg2img` converter is provided by this overlay.
+The local generated tar archive is kept for recovery and is not deleted
+by an ebuild. Apple recovery versions, required chip variants, and
+firmware availability can change; other images (Ventura or Monterey)
+may be necessary. Do not install `broadcom-wl` for T2 Macs.
+
 ## 1. Identify your machine and kernel
 
 ```sh
