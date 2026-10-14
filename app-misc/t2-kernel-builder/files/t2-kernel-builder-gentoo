@@ -1,41 +1,73 @@
 #!/usr/bin/env bash
-# Gentoo-side companion to KaiT2en's Fedora-oriented graphical kernel builder.
-# Intentionally defers compilation, installation, signing, and initramfs hooks to Portage.
+# Gentoo-native KaiT2en kernel interface. Never invokes Fedora Koji/RPM/DKMS.
+# Kernel builds and OpenZFS modules remain independently managed by Portage.
 set -euo pipefail
 usage() {
-    cat <<'EOF'
+cat <<'EOF'
 KaiT2en Gentoo kernel helper
-Usage: t2-kernel-builder {status|build|patches|help}
+Usage: t2-kernel-builder COMMAND [KERNEL_RELEASE]
 
-status   Display Gentoo kernel selection and patch/config locations
-build    Call Portage to build sys-kernel/gentoo-kernel (root only)
-patches  Explain how to opt into the version-specific upstream patch series
+  status        Show selected Gentoo kernel sources and patch directories
+  sources       Install Gentoo Linux source package plus T2 patch toolkit
+  build         Build Gentoo's source-built distribution kernel with Portage
+  build-zfs     Build Gentoo's distribution kernel and matching OpenZFS module
+  patches       Explain safe opt-in for T2 kernel patches
+  verify-zfs K  Check a compiled zfs.ko for the explicitly selected kernel K
+  help          Print this message
 
-This is a Gentoo-native CLI, not the upstream Fedora/Koji graphical builder.
-Never use Fedora's build.sh, RPM installers, or DKMS against a Gentoo kernel.
+The packages sys-kernel/kait2en-sources and
+sys-kernel/kait2en-kernel-openzfs are independent Portage metapackages.
+The latter does not statically link OpenZFS into Linux; sys-fs/zfs builds its
+own matching kernel module. Neither path applies unverified T2 patches.
+Keep a fallback boot kernel, especially with a ZFS root filesystem.
 EOF
 }
-case "${1:-help}" in
+needroot() {
+    (( EUID == 0 )) || { echo "Use sudo/root for this command" >&2; exit 1; }
+}
+[[ $# -ge 1 ]] || set -- help
+cmd=$1
+shift
+case ${cmd} in
     status)
-        command -v eselect >/dev/null && eselect kernel list || true
-        printf 'Kernel config snippets: /etc/kernel/config.d/*.config\n'
-        printf 'User patches: /etc/portage/patches/sys-kernel/gentoo-kernel/\n'
-        printf 'Installed patch sets: /usr/share/kait2en/kernel-patches/\n'
+        [[ $# == 0 ]] || { usage >&2; exit 2; }
+        if command -v eselect >/dev/null; then eselect kernel list || true; fi
+        printf '%s\n' 'Configs: /etc/kernel/config.d/*.config'
+        printf '%s\n' 'Source package user patches: /etc/portage/patches/sys-kernel/gentoo-sources/'
+        printf '%s\n' 'Distribution kernel user patches: /etc/portage/patches/sys-kernel/gentoo-kernel/'
+        printf '%s\n' 'Packaged T2 series: /usr/share/kait2en/kernel-patches/gpu-runtime-pm/'
         ;;
     patches)
-        printf '%s\n' 'Upstream GPU runtime patch series is kernel-version-specific.'
-        printf '%s\n' 'Inspect /usr/share/kait2en/kernel-patches/gpu-runtime-pm/series.'
-        printf '%s\n' 'For a compatible Gentoo source build, explicitly copy the numbered patches into'
-        printf '%s\n' '/etc/portage/patches/sys-kernel/gentoo-kernel/ after reviewing applicability.'
-        printf '%s\n' 'Portage then applies them via eapply_user during source preparation.'
+        [[ $# == 0 ]] || { usage >&2; exit 2; }
+        printf '%s\n' 'Install sys-kernel/kait2en-kernel-patches if needed.'
+        printf '%s\n' 'Check selected source and series:'
+        printf '%s\n' '  kait2en-kernel-preflight /usr/src/linux'
+        printf '%s\n' 'Review each patch and its target kernel release before enabling it.'
+        printf '%s\n' 'Copy only the applicable series into the Portage user-patches'
+        printf '%s\n' 'directory for the correct package. Remove copied patches to revert.'
+        printf '%s\n' 'Never mix Fedora RPM kernels and Gentoo module builds.'
+        ;;
+    sources)
+        [[ $# == 0 ]] || { usage >&2; exit 2; }
+        needroot
+        exec emerge --ask --verbose sys-kernel/kait2en-sources
         ;;
     build)
-        if (( EUID != 0 )); then
-            echo "Run the build command as root using your preferred privilege tool." >&2
-            exit 1
-        fi
+        [[ $# == 0 ]] || { usage >&2; exit 2; }
+        needroot
         exec emerge --ask --verbose sys-kernel/gentoo-kernel
         ;;
-    help|-h|--help) usage ;;
+    build-zfs)
+        [[ $# == 0 ]] || { usage >&2; exit 2; }
+        needroot
+        exec emerge --ask --verbose sys-kernel/kait2en-kernel-openzfs
+        ;;
+    verify-zfs)
+        [[ $# == 1 && $1 =~ ^[A-Za-z0-9._+-]+$ ]] || { usage >&2; exit 2; }
+        command -v kait2en-kernel-preflight >/dev/null ||
+            { echo 'Install sys-kernel/kait2en-kernel-patches first' >&2; exit 1; }
+        exec kait2en-kernel-preflight --installed-zfs "$1"
+        ;;
+    help|-h|--help) [[ $# == 0 ]] || { usage >&2; exit 2; }; usage ;;
     *) usage >&2; exit 2 ;;
 esac

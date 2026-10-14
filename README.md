@@ -1,145 +1,265 @@
-# KaiT2en Gentoo overlay
+# KaiT2en for Gentoo Linux — MacBook Pro T2 setup
 
-This **personal Gentoo overlay** packages [KaiT2en](https://github.com/Keylem/KaiT2en-Gentoo) for **amd64 Gentoo with a systemd profile**. Unlike the abandoned `/opt` + installer approach, Portage owns each installed file; ebuilds do **not** call upstream `install.sh`, `emerge`, `dkms`, `systemctl enable`, or `make install` on the host.
+**A beginner's step-by-step guide** to using Gentoo Linux on an Intel Apple
+MacBook Pro with the T2 chip. You can run **Linux only**, without keeping a
+macOS partition. Wi-Fi firmware can be downloaded from Apple's recovery server
+without macOS installed.
 
-## Add repository
+> **Status:** Community overlay under active testing, not a ready-made Gentoo
+> installation ISO. A compatible Gentoo kernel, bootloader, and working
+> fallback are still necessary. The scripts below do not erase disks or enable
+> experimental kernel patches automatically.
 
-Create `/etc/portage/repos.conf/keylem.conf`:
+## Before starting
 
-```ini
+You will need a T2 MacBook Pro, a USB installation drive, a way to access the
+Internet initially **without the built-in Wi-Fi** (USB phone tethering or
+Ethernet), and backups of anything you want to keep.
+
+**Boot/security setup:** On T2 Macs, first use macOS Recovery's
+**Utilities → Startup Security Utility** to choose **No Security** and allow
+booting from external media. This is a T2 firmware setting, **not** the same
+thing as needing macOS installed for Wi-Fi. If you erased macOS before changing
+boot policy, you may need to restore access to Apple Recovery first.
+[Read the T2 Linux pre-install guide](https://wiki.t2linux.org/guides/preinstall/).
+
+### Step 1 — Install Gentoo Linux itself
+
+Download a Gentoo **amd64 systemd stage3** and use the
+[official Gentoo AMD64 Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64)
+for partitioning, stage3 installation, selecting the systemd profile,
+configuring a bootloader and making your first boot.
+
+**Do not copy partitioning commands from another Mac:** disk layouts,
+EFI partitions, and whether macOS is retained differ. Do not format the EFI
+System Partition unless you know it is safe. Preserve your recovery route.
+
+For beginners, get a working Gentoo boot with a **source-built Gentoo
+distribution kernel**, initramfs and NetworkManager **before** adding T2
+extras. Verify:
+
+```sh
+cat /etc/gentoo-release
+test -d /run/systemd/system && echo "systemd is running"
+cat /sys/class/dmi/id/product_name
+uname -r
+```
+
+If systemd isn't running, select a Gentoo systemd installation/profile first.
+This overlay does not convert an OpenRC system automatically.
+
+### Step 2 — Get temporary Internet access
+
+The Mac's Broadcom chip may need firmware before Wi-Fi can work. Use Ethernet
+via USB adapter or USB tethering from a phone. Check the link:
+
+```sh
+nmcli device status
+ping -c 3 github.com
+```
+
+If `nmcli` is not installed, install/enable NetworkManager on Gentoo:
+
+```sh
+sudo emerge -av net-misc/networkmanager
+sudo systemctl enable --now NetworkManager.service
+```
+
+### Step 3 — Add this overlay
+
+Copy these commands **one at a time**:
+
+```sh
+sudo mkdir -p /etc/portage/repos.conf
+sudo tee /etc/portage/repos.conf/keylem.conf >/dev/null <<'EOF'
 [keylem]
 location = /var/db/repos/keylem
 sync-type = git
 sync-uri = https://github.com/Keylem/gentoo-repo.git
 auto-sync = yes
+EOF
+sudo emaint sync -r keylem
 ```
 
-After merging this branch, `emaint sync -r keylem`. For PR testing before merge, clone the PR branch into a local overlay with the same repo name instead.
+Most apps in this repository track development `9999` versions. Allow these
+**only in the keylem overlay**, not all Gentoo packages:
 
-All source-based KaiT2en packages are **9999 live ebuilds**, so their `KEYWORDS` are intentionally empty. In `/etc/portage/package.accept_keywords/kait2en` enable them explicitly, for example:
-
-```
-app-misc/kait2en **
-app-misc/t2-fan-control **
-sys-kernel/kait2en-t2smc **
+```sh
+sudo mkdir -p /etc/portage/package.accept_keywords
+echo '*/*::keylem **' | sudo tee /etc/portage/package.accept_keywords/kait2en
 ```
 
-The metapackage uses multiple live dependencies, so add `**` for each selected dependency. The `app-misc/t2-kernel-builder` Gentoo CLI uses a regular `1.0` ebuild.
+> These instructions apply once the linked PR has been merged to `main`.
+> For testing the draft branch, use a separate clone of its branch as your
+> local overlay.
 
-## Independently installable packages
+### Step 4 — Get the MacBook Wi-Fi firmware (NO macOS required)
 
-**Rust GUI apps** (each installs its own binary/desktop icon/service/polkit helpers as available):
-`app-misc/t2-fan-control`, `app-misc/t2-force-click`, `app-misc/t2-smc-control`, `app-misc/t2-power-explorer`, `app-misc/t2-zone-power`, `app-misc/t2-dgpu-control`, `app-misc/t2-hybrid-gpu-control`, `app-misc/kait2en-touchbar`.
+This is an **optional one-time firmware setup**, not part of a normal Portage
+build. It uses [kholia's macOS recovery downloader](https://github.com/kholia/OSX-KVM/blob/master/fetch-macOS-v2.py)
+and T2 Linux's Broadcom firmware renamer. Apple firmware is proprietary and
+**never stored in this GitHub repository**.
 
-**Other programs/services:** `app-misc/t2-journal`, `app-misc/t2-ave`, `app-misc/t2-touchid`, `app-misc/t2-power-tune`, `app-misc/t2-services-common`, `app-misc/t2-dsp`, `app-misc/t2-alsa-ucm`, `app-misc/t2-kernel-builder`.
-
-**Kernel drivers** (one ebuild per Kbuild unit, names prefixed with `sys-kernel/kait2en-`): `hid-t2magicmouse`, `t2-precision-trackpad`, `t2-trackpad-actuator`, `t2bdrm`, `t2gmux`, `t2mfi-fastcharge`, `t2sbs`, `t2sep`, `t2smc`, `t2smp`, `t2thunderbolt`, `t2touchbar`, and `t2bce-stack`. The BCE stack is intentionally one build unit because five kernel modules share a Kbuild/modpost symbol namespace.
-
-The **metapackage** is `app-misc/kait2en`; core apps are on by default and services, drivers, Touch Bar, audio, GPU flavor, and kernel patchset are selectable with USE flags. Discrete and hybrid GPU modes are mutually exclusive and should be chosen only on supported models.
-
-## Gentoo kernel workflow
-
-- Use `sys-kernel/gentoo-kernel` from source (or manually selected `gentoo-sources`/custom source tree). `gentoo-kernel-bin` cannot incorporate custom kernel source patches.
-- Use `/etc/kernel/config.d/*.config` for supported Gentoo distribution-kernel configuration snippets.
-- `sys-kernel/kait2en-kernel-patches` **stages** the upstream `gpu-runtime-pm` series under `/usr/share/kait2en/kernel-patches/gpu-runtime-pm`. It does not apply unverified patches automatically. Inspect `series`, target kernel version and each patch; opt in via `/etc/portage/patches/sys-kernel/gentoo-kernel/` (Portage's `eapply_user`) if the exact series applies.
-- The **new** `t2-kernel-builder` command is a Gentoo CLI wrapper exposing `status`, `patches`, and `build`; it delegates builds to Portage. This is **not** a port of the upstream Fedora/Koji graphical kernel builder.
-- `linux-mod-r1` builds modules against Gentoo's selected `KV_OUT_DIR`, with Gentoo toolchain/signing/compression/depmod handling. Enable `USE=dist-kernel` where appropriate and use `emerge --ask @module-rebuild` when rebuilding custom kernels. Select a kernel with `eselect kernel` when relevant.
-
-## Services and hardware
-
-Units are installed via `systemd.eclass` and **not auto-enabled**. On supported machines, inspect then enable only the relevant services, e.g. `systemctl enable --now t2-fancontrol.service`. The touchbar has a **user** unit and a separate system attach unit. Polkit entries and drivers are package-owned. For power management and graphics, verify machine model first.
-
-## Validation before deploying to a real machine
-
-```bash
-python3 tests/test_overlay.py
-find app-misc sys-kernel -name '*.ebuild' -exec bash -n '{}' +
-pkgcheck scan --repo=keylem
-emerge -pvt app-misc/t2-fan-control
-emerge -pvt app-misc/t2-ave
-emerge -pvt sys-kernel/kait2en-t2bce-stack
-emerge -pvt app-misc/kait2en
+```sh
+sudo emerge -av app-misc/kait2en-wifi-tools
 ```
 
-For **each** live package, perform a real `ebuild path/to/package-9999.ebuild manifest clean unpack prepare compile install` in a Gentoo test system/chroot, including the enabled systemd profile. For hardware/runtime checks test kernel module loading, suspend/resume, and Touch ID **on the exact Mac model**. This repository's structural checks alone do not prove 100% install/runtime compatibility; upstream builds move with `main`, kernel APIs vary, and the Fedora-specific upstream GUI has not been ported.
+Run the next command **as your regular login user, without sudo**. It downloads
+an Apple recovery image (approximately 650 MB) and extracts the firmware to a
+local archive; allow several GB of free storage. It may ask for `sudo` to
+mount the recovery image **read-only**.
 
-**Important:** These modules and some kernel patches can affect boot, storage, power management, or suspend. Keep a working fallback kernel/boot entry.
-
-## Clean installs, upgrades, and uninstallations
-
-All package-owned binaries, policy files, icons, unit files, udev rules,
-kernel modules, DSP profiles and upstream patch files are installed into the
-Portage image. No install hook directly copies to `/usr/local` or `/opt`.
-Nothing automatically enables a service or patches the running kernel.
-
-On **first install** choose only the components and compatible GPU model
-you need. To **update**, synchronize the overlay and explicitly rebuild live
-ebuilds (`-9999` packages) to obtain a new upstream revision, preferably
-the entire chosen KaiT2en set together. When a unit file changes, restart
-the service yourself at a suitable maintenance time. The eclass deliberately
-does not stop/disable services during upgrades.
-
-On **unmerge**, the custom systemd lifecycle code stops/disables *system*
-units owned by that package, only for a real running systemd installation
-and only on final unmerge; Portage removes package-owned files. **Per-user**
-units such as `kait2en-touchbar.service` must be disabled from each
-participating account before removing the package:
-
-```bash
-systemctl --user disable --now kait2en-touchbar.service
-sudo emerge --ask --unmerge app-misc/kait2en-touchbar
+```sh
+kait2en-wifi-setup prepare sonoma
 ```
 
-On the final unmerge of `app-misc/t2-power-tune`, any service created
-interactively by the GUI in `/etc/systemd/system/` must also be reviewed and
-removed manually. Portage must not remove files it did not install. Likewise,
-`CONFIG_PROTECT` may preserve modified files under `/etc`, and application
-state under home folders is *never silently deleted*. Removing only the
-metapackage does **not** remove its independent dependencies: use
-`emerge --ask --depclean` once they are no longer required by any other
-package, and inspect the plan before accepting it.
+If Apple no longer provides usable Sonoma recovery, try `ventura` or
+`monterey`. If the command fails, see the
+[T2 Linux Wi-Fi guide](https://wiki.t2linux.org/guides/wifi-bluetooth/)
+rather than trying a random firmware download.
 
-After an update to a Gentoo kernel, use `USE=dist-kernel`, rebuild external
-modules as needed and regenerate the ZFS-aware initramfs before reboot.
-Always keep an older bootable kernel.
+Apple's firmware is not free software. Gentoo requires **per-package license
+acceptance** before the final installation. Read Apple's applicable terms
+first; if you agree, configure:
 
-## OpenZFS compatibility gate
-
-The `kernel-patches` package stages the **currently available AMD GPU
-patch series**, not patches to OpenZFS or to the Linux VFS. These files are
-*not* proof of compatibility with every Linux release or OpenZFS build.
-
-```bash
-sudo emerge --ask sys-kernel/gentoo-kernel sys-fs/zfs
-kait2en-kernel-preflight /usr/src/linux
-# Only if the preflight passes and you have reviewed the exact patch series:
-# copy the numbered patch files into /etc/portage/patches/sys-kernel/gentoo-kernel/
-# Rebuild the kernel and OpenZFS for this identical kernel.
-sudo emerge --ask --oneshot sys-kernel/gentoo-kernel sys-fs/zfs
-kait2en-kernel-preflight --installed-zfs KERNEL_RELEASE
+```sh
+sudo mkdir -p /etc/portage/package.license
+echo 'sys-firmware/kait2en-wifi-firmware all-rights-reserved' |
+    sudo tee /etc/portage/package.license/kait2en-wifi
 ```
 
-Before a ZFS-root reboot, validate `modprobe -S KERNEL_RELEASE -n -v zfs`,
-the initramfs contents and bootloader entry without replacing the working
-fallback. Kernel patch application + `modinfo` do **not** establish mount,
-scrub, snapshot, suspend or rollback safety. Test those on real hardware,
-and never test unreviewed patches against the only copy of a pool.
+After it prints the output path, **stage** that file (replace the example home
+path with yours):
 
-Gentoo currently ships `sys-fs/zfs` and `sys-fs/zfs-kmod` for different
-packaging flows; do not force both. The optional `openzfs` USE flag on the
-metapackage selects `sys-fs/zfs`, but the operator still has to ensure the
-particular ZFS release supports the selected kernel. `linux-mod-r1` or a
-successful patch dry-run alone does not validate that API relationship.
+```sh
+sudo kait2en-wifi-setup stage "$HOME/.cache/kait2en-wifi/firmware.tar"
+sudo emerge -av sys-firmware/kait2en-wifi-firmware
+sudo reboot
+```
 
-## Desktop and udev cache refresh
+After reboot, connect through your desktop's network menu or:
 
-The GUI ebuilds use Gentoo's `xdg.eclass` so desktop and icon caches are
-updated correctly on install, upgrade and removal. The Touch Bar and DSP
-components use `udev.eclass` to reload udev rule databases after merge
-and unmerge. This does not automatically activate/deactivate any hardware
-or restart a user's graphical session.
+```sh
+nmcli device wifi list
+nmcli --ask device wifi connect "YOUR_NETWORK"
+```
 
-The optional `app-misc/t2-kernel-builder` does not force installation or replacement
-of an existing kernel: its `build` command explicitly starts an `emerge
-sys-kernel/gentoo-kernel` transaction. Inspect the proposed install plan
-before agreeing, particularly when using ZFS-root or a custom kernel.
+Using `--ask` avoids leaving your Wi-Fi password in shell history.
+
+**If you still have no Wi-Fi:** check `lspci -nn`,
+`journalctl -k -b | grep -i brcm` and `nmcli device status`. You need
+the kernel's **`brcmfmac` driver**, not `broadcom-wl`.
+The required recovery image may vary by model and Apple availability;
+this process has not been tested on every MacBook Pro T2.
+
+### Step 5 — Install the T2 kernel driver components
+
+The distribution kernel may already contain some drivers. **Do not install
+every module blindly**: older and in-kernel copies can conflict.
+
+Check `lsmod`, `modinfo t2smc` and your machine's hardware first. For a
+typical SMC/trackpad setup, inspect the install plan:
+
+```sh
+sudo emerge -pvt sys-kernel/kait2en-t2smc
+sudo emerge -av sys-kernel/kait2en-t2smc
+```
+
+Additional individually packaged drivers (BCE, Touch Bar, trackpad, GPU and
+others) are described in the [complete component guide](docs/INSTALL-AND-USE.md).
+These are external modules built for Gentoo's selected kernel.
+
+### Step 6 — Install the apps
+
+Install the basic control apps as a group:
+
+```sh
+sudo emerge -av app-misc/kait2en
+```
+
+Or choose **just one app**:
+
+```sh
+sudo emerge -av app-misc/t2-fan-control
+```
+
+You should now find Fan Control, SMC Control, Power Explorer, Force Click and
+Zone Power in your desktop application menu (depending on what you installed).
+
+**Important:** Services aren't enabled automatically. After verifying your
+hardware, you can start Fan Control's background service with:
+
+```sh
+sudo systemctl enable --now t2-fancontrol.service
+```
+
+### Step 7 — Optional Touch Bar, Touch ID, audio and GPU features
+
+| Goal | Package to install | Next action |
+|---|---|---|
+| Touch Bar | `app-misc/kait2en-touchbar` | Join `kait2en-touchbar` group; reboot; enable user service |
+| Touch ID | `app-misc/t2-touchid` | Configure bridge service and `fprintd`; enroll in macOS first |
+| Speakers/DSP | `app-misc/t2-alsa-ucm`, `app-misc/t2-dsp` | Restart audio session |
+| T2 diagnostics | `app-misc/t2-journal` | Run `t2journal -b` |
+| GPU switching | `app-misc/t2-dgpu-control` **or** `app-misc/t2-hybrid-gpu-control` | Check exact Mac model and kernel patch compatibility |
+| Kernel helper | `app-misc/t2-kernel-builder` | Run `t2-kernel-builder help` |
+
+The [complete guide](docs/INSTALL-AND-USE.md) has the commands and model
+restrictions for all of these. Don't enable GPU switching on an unsupported Mac.
+
+### Step 8 — Optional Gentoo kernel sources or OpenZFS
+
+For kernel **sources** managed through Portage:
+
+```sh
+sudo emerge -av sys-kernel/kait2en-sources
+```
+
+For the Gentoo source-built **distribution kernel + OpenZFS external module**:
+
+```sh
+sudo mkdir -p /etc/portage/package.use
+printf 'sys-fs/zfs dist-kernel modules\nsys-kernel/installkernel dracut\n' |
+    sudo tee /etc/portage/package.use/kait2en-zfs
+sudo emerge -av sys-kernel/kait2en-kernel-openzfs
+```
+
+These metapackages **stage** T2 kernel patches; they don't apply unverified
+patches automatically. Use `kait2en-kernel-preflight` to check applicability.
+If you boot from ZFS, test the exact kernel/ZFS version and initramfs before
+switching your default boot entry. Keep your previous bootable kernel.
+See [the advanced kernel guide](docs/INSTALL-AND-USE.md#9-kernel-installation-option-b--portage-kernel-with-openzfs).
+
+### Step 9 — Update or undo your changes
+
+```sh
+sudo emaint sync -r keylem
+sudo emerge -av1 app-misc/t2-fan-control
+```
+
+To remove an optional application cleanly:
+
+```sh
+sudo systemctl disable --now t2-fancontrol.service
+sudo emerge --unmerge app-misc/t2-fan-control
+sudo emerge --ask --pretend --depclean
+```
+
+To remove the extracted Apple Wi-Fi firmware from **Portage's installed
+files**, use `sudo emerge --unmerge sys-firmware/kait2en-wifi-firmware`.
+The staging archive at `/var/cache/kait2en-wifi/firmware.tar` and your
+`~/.cache/kait2en-wifi` copy are intentionally preserved so you can recover
+Wi-Fi after reinstalling. Remove those copies manually if you no longer need
+them. Uninstalling firmware will make Wi-Fi unavailable after the next reload
+or reboot unless an alternative firmware is present.
+
+## More detailed instructions
+
+- **[All applications, systemd services, kernels, OpenZFS and troubleshooting](docs/INSTALL-AND-USE.md)**
+- [Official Gentoo Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64)
+- [T2 Linux pre-install boot-security instructions](https://wiki.t2linux.org/guides/preinstall/)
+- [T2 Linux Wi-Fi and Bluetooth firmware documentation](https://wiki.t2linux.org/guides/wifi-bluetooth/)
+
+**Testing status:** Package dependency resolution and CI checks are not an
+end-to-end Gentoo kernel or real Apple T2 hardware certification. Please keep a
+known-good Linux boot entry.

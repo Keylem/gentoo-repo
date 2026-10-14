@@ -19,6 +19,8 @@ RESTRICT="test"
 S="${EGIT_CHECKOUT_DIR}/apps/t2-force-click"
 
 RDEPEND="
+    sys-kernel/kait2en-t2-precision-trackpad
+    sys-kernel/kait2en-t2-trackpad-actuator
     app-misc/kait2en-assets
     gui-libs/gtk:4
     gui-libs/libadwaita:1
