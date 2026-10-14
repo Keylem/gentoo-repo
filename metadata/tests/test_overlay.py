@@ -69,7 +69,7 @@ for name in ("t2-fan-control", "t2-force-click", "t2-smc-control", "t2-power-exp
 for name in ("kait2en-touchbar", "t2-dsp"):
     eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
     assert "udev_reload" in eb, name
-doc = (ROOT / "docs/INSTALL-AND-USE.md").read_text()
+doc = (ROOT / "metadata/docs/INSTALL-AND-USE.md").read_text()
 for package in expected:
     if package != "acct-group/kait2en-touchbar":
         assert package.split("/")[-1] in doc, f"Not documented: {package}"
