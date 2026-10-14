@@ -11,7 +11,6 @@ S="${WORKDIR}"
 RDEPEND="
     sys-apps/portage
     app-admin/eselect
-    sys-kernel/gentoo-kernel
 "
 src_install() {
     newbin "${FILESDIR}/t2-kernel-builder-gentoo" t2-kernel-builder

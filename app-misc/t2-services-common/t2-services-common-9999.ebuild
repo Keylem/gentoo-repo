@@ -5,12 +5,13 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit git-r3 systemd
+inherit git-r3 systemd kait2en-systemd
 DESCRIPTION="Shared bridge service integration for Apple T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
+KAIT2EN_SYSTEMD_UNITS="t2-services-suspend.service"
 IUSE="+networkmanager"
 S="${EGIT_CHECKOUT_DIR}/t2-services/shared"
 RDEPEND="sys-apps/systemd networkmanager? ( net-misc/networkmanager )"
@@ -40,4 +41,16 @@ src_install() {
         doins "${S}/integration/NetworkManager/t2-ncm.nmconnection"
         fperms 0600 /etc/NetworkManager/system-connections/t2-ncm.nmconnection
     fi
+}
+pkg_postinst() {
+    kait2en_systemd_pkg_postinst
+    elog "Enable only services supported by your T2 hardware."
+}
+
+pkg_prerm() {
+    kait2en_systemd_pkg_prerm
+}
+
+pkg_postrm() {
+    kait2en_systemd_pkg_postrm
 }

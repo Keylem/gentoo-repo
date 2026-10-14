@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Apply the ordered GPU series to an isolated shadow tree of touched files.
+# Does not modify kernel sources or enable patches; no root needed.
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: kait2en-kernel-preflight SOURCE_TREE [PATCH_DIR]
+       kait2en-kernel-preflight --installed-zfs KERNEL_RELEASE
+
+SOURCE_TREE is the unpacked Gentoo kernel tree, e.g. /usr/src/linux.
+PATCH_DIR defaults to /usr/share/kait2en/kernel-patches/gpu-runtime-pm.
+The entire patch series is applied in order to copies of only the touched
+kernel files, with fuzz disabled. A PASS proves patch applicability on that
+source revision only; it DOES NOT prove the patched kernel boots or OpenZFS builds.
+--installed-zfs verifies that the ZFS module was compiled for an installed
+kernel version; it does not test a mounted ZFS filesystem.
+EOF
+}
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
+if [[ ${1:-} == --installed-zfs ]]; then
+    [[ $# == 2 && ${2} =~ ^[a-zA-Z0-9._+-]+$ ]] || { usage >&2; exit 2; }
+    command -v modinfo >/dev/null || fail "kmod/modinfo is required"
+    [[ -d /lib/modules/${2} ]] || fail "Missing /lib/modules/${2}"
+    modinfo -k "${2}" zfs >/dev/null ||
+        fail "OpenZFS zfs.ko not available for ${2}. Rebuild sys-fs/zfs or sys-fs/zfs-kmod for this kernel."
+    printf 'PASS: zfs.ko exists for kernel %s (runtime loading and data integrity not checked)\n' "${2}"
+    exit 0
+fi
+[[ $# == 1 || $# == 2 ]] || { usage >&2; exit 2; }
+kernel=$(realpath -e -- "$1") || fail "kernel source does not exist"
+series=$(realpath -e -- "${2:-/usr/share/kait2en/kernel-patches/gpu-runtime-pm}") ||
+    fail "patch directory does not exist"
+[[ -f ${kernel}/Makefile && -f ${series}/series ]] ||
+    fail "expected a kernel source tree and a patch directory containing series"
+command -v patch >/dev/null || fail "sys-devel/patch is required"
+shadow=$(mktemp -d) || fail "cannot create a temporary directory"
+trap 'rm -rf -- "${shadow}"' EXIT HUP INT TERM
+declare -A touched=()
+declare -a patches=()
+while IFS= read -r filename || [[ -n ${filename} ]]; do
+    [[ -n ${filename} && ! ${filename} =~ ^[[:space:]]*# ]] || continue
+    [[ ${filename} =~ ^[A-Za-z0-9._-]+\.patch$ ]] ||
+        fail "unsafe patch filename in series: ${filename}"
+    [[ -f ${series}/${filename} ]] || fail "missing patch: ${filename}"
+    patches+=( "${series}/${filename}" )
+    found=0
+    while IFS= read -r line; do
+        case ${line} in
+            '--- a/'*|'+++ b/'*)
+                path=${line:6}
+                path=${path%%[$'\t ']*}
+                [[ ${path} == drivers/gpu/drm/amd/* ]] ||
+                    fail "${filename} changes non-GPU path: ${path}; review against OpenZFS before proceeding"
+                [[ ${path} != *../* ]] || fail "unsafe relative path: ${path}"
+                touched["${path}"]=1
+                found=1
+                ;;
+        esac
+    done < "${series}/${filename}"
+    (( found == 1 )) || fail "no GNU patch file headers: ${filename}"
+done < "${series}/series"
+(( ${#patches[@]} > 0 )) || fail "empty patch series"
+for path in "${!touched[@]}"; do
+    if [[ -e ${kernel}/${path} ]]; then
+        mkdir -p -- "${shadow}/$(dirname -- "${path}")" || fail "mkdir"
+        cp -- "${kernel}/${path}" "${shadow}/${path}" || fail "copy ${path}"
+    fi
+done
+for item in "${patches[@]}"; do
+    printf 'Checking %s\n' "${item##*/}"
+    ( cd "${shadow}" && patch --batch --forward --fuzz=0 -p1 < "${item}" ) ||
+        fail "${item##*/} does not apply to ${kernel}; do not install the patch series"
+done
+printf 'PASS: all %d patches apply in order on this kernel source; no original files changed.\n' "${#patches[@]}"
+printf '%s\n' 'OpenZFS still requires a successful build and module check on the same kernel.'

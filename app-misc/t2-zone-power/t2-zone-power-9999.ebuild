@@ -6,13 +6,14 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd
+inherit cargo git-r3 systemd xdg kait2en-systemd xdg
 
 DESCRIPTION="T2 Mac power zone management"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
+KAIT2EN_SYSTEMD_UNITS="t2-zonepowerd.service"
 RESTRICT="test"
 
 S="${EGIT_CHECKOUT_DIR}/apps/t2-zone-power"
@@ -21,7 +22,7 @@ RDEPEND="
     app-misc/kait2en-assets
     gui-libs/gtk:4
     gui-libs/libadwaita:1
-    sys-apps/polkit
+    sys-auth/polkit
     
     
     
@@ -29,6 +30,7 @@ RDEPEND="
     sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
+BDEPEND="virtual/pkgconfig"
 
 src_unpack() {
     git-r3_src_unpack
@@ -65,6 +67,16 @@ src_install() {
 }
 
 pkg_postinst() {
-    elog "Services are installed but intentionally not auto-enabled."
-    elog "Enable only those matching your T2 Mac hardware using systemctl."
+    xdg_pkg_postinst
+    kait2en_systemd_pkg_postinst
+    elog "Enable only services supported by your T2 hardware."
+}
+
+pkg_prerm() {
+    kait2en_systemd_pkg_prerm
+}
+
+pkg_postrm() {
+    xdg_pkg_postrm
+    kait2en_systemd_pkg_postrm
 }
