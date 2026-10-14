@@ -27,23 +27,34 @@ test_atom dev-util/dmg2img /usr/bin/dmg2img
 test_atom app-misc/kait2en-wifi-tools /usr/bin/kait2en-wifi-setup
 
 # Generate benign test bytes; never download or distribute proprietary Apple
-# firmware in CI. Real Portage unpack/install/unmerge must still work.
-mkdir -p -m 0700 /var/cache/kait2en-wifi
-python3 - <<'PY'
+# firmware in CI. Exercise the *installed* staging helper, then confirm the
+# unprivileged Portage build user can read the archive.
+synthetic=$(mktemp /tmp/kait2en-synthetic-firmware.XXXXXXXX.tar)
+python3 - "$synthetic" <<'PY'
 import io
+import sys
 import tarfile
-path = "/var/cache/kait2en-wifi/firmware.tar"
-with tarfile.open(path, "w") as tar:
+with tarfile.open(sys.argv[1], "w") as tar:
     data = b"synthetic test payload, NOT real Apple firmware"
     info = tarfile.TarInfo("brcmfmac4377b3-pcie.apple.bin")
     info.size = len(data)
     tar.addfile(info, io.BytesIO(data))
 PY
+emerge --ask=n --oneshot app-misc/kait2en-wifi-tools
+kait2en-wifi-setup stage "$synthetic"
+rm -f "$synthetic"
+[[ $(stat -c '%a:%G' /var/cache/kait2en-wifi) == 750:portage ]] ||
+    { echo "FAIL: firmware staging directory must be root:portage mode 750" >&2; exit 1; }
+[[ $(stat -c '%a:%G' /var/cache/kait2en-wifi/firmware.tar) == 640:portage ]] ||
+    { echo "FAIL: firmware archive must be root:portage mode 640" >&2; exit 1; }
+runuser -u portage -- test -r /var/cache/kait2en-wifi/firmware.tar ||
+    { echo "FAIL: Portage build user cannot read staged firmware" >&2; exit 1; }
 test_atom sys-firmware/kait2en-wifi-firmware /lib/firmware/brcm/brcmfmac4377b3-pcie.apple.bin
 # The original staged archive is not package-owned and must survive unmerge.
 [[ -s /var/cache/kait2en-wifi/firmware.tar ]] ||
     { echo "FAIL: Portage unexpectedly removed user-staged firmware" >&2; exit 1; }
+emerge --ask=n --unmerge app-misc/kait2en-wifi-tools
 rm -f /var/cache/kait2en-wifi/firmware.tar
 rmdir /var/cache/kait2en-wifi
-echo "PASS: real Portage install/reinstall/unmerge including synthetic Wi-Fi firmware"
+echo "PASS: real Portage install/reinstall/unmerge, unprivileged staging, synthetic Wi-Fi firmware"
 
