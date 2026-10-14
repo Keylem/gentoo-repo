@@ -9,6 +9,7 @@ T2_SHA256=c1c1d8aa25bb5f089e46ccd0d9738fc13bfbd784f499aa924466c690f059961e
 OSX_URL="https://raw.githubusercontent.com/kholia/OSX-KVM/${OSX_COMMIT}/fetch-macOS-v2.py"
 T2_URL="https://raw.githubusercontent.com/t2linux/wiki/${T2_COMMIT}/docs/tools/firmware.sh"
 VALIDATOR=/usr/libexec/kait2en-wifi/validate.py
+RENAMER=/usr/libexec/kait2en-wifi/rename-pinned-firmware.sh
 STAGED=/var/cache/kait2en-wifi/firmware.tar
 usage() {
 cat <<'EOF'
@@ -49,6 +50,7 @@ prepare() {
     local version=${1:-sonoma} part found=0 out
     case $version in monterey|ventura|sonoma) ;; *) die 'Choose monterey, ventura or sonoma' ;; esac
     for cmd in python3 curl dmg2img sudo losetup lsblk mount mountpoint umount tar awk sha256sum; do needs "$cmd"; done
+    [[ -f $RENAMER ]] || die "Missing installed firmware renamer: $RENAMER"
     tmp=$(mktemp -d "${TMPDIR:-/tmp}/kait2en-wifi.XXXXXXXX")
     chmod 0700 "$tmp"
     trap cleanup EXIT HUP INT TERM
@@ -84,8 +86,9 @@ prepare() {
         fi
     fi
     (( found == 1 )) || die 'No firmware tree in image. Try a different version (Monterey/Ventura/Sonoma).'
-    # The t2linux rename_only subcommand never installs files or requires root.
-    ( cd -- "$tmp" && bash firmware.sh rename_only "$mount_dir/usr/share/firmware" "$tmp/firmware.tar" ) ||
+    # The pinned upstream Linux dispatcher rejects "rename_only". Run only
+    # its checksum-verified, platform-independent rename_firmware function.
+    bash "$RENAMER" "$tmp/firmware.sh" "$mount_dir/usr/share/firmware" "$tmp/firmware.tar" ||
         die 'The upstream firmware renamer failed'
     python3 "$VALIDATOR" "$tmp/firmware.tar" || die 'No valid Broadcom Wi-Fi files extracted'
     out="${XDG_CACHE_HOME:-$HOME/.cache}/kait2en-wifi"
