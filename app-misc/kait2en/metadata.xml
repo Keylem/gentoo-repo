@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-  <maintainer type="person">
-    <email>keylem@users.noreply.github.com</email>
-    <name>Keylem</name>
-  </maintainer>
-  <longdescription>
-    KaiT2en provides Linux support tooling for Apple T2 hardware, including
-    kernel modules, userspace utilities, and systemd-integrated services.
-  </longdescription>
-  <upstream>
-    <remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id>
-  </upstream>
+  <use>
+    <flag name="apps">Install the core GUI applications</flag>
+    <flag name="drivers">Install the independently packaged T2 driver groups</flag>
+    <flag name="services">Install the systemd-integrated bridge services</flag>
+    <flag name="dsp">Install audio DSP and WirePlumber integration</flag>
+    <flag name="alsa">Install ALSA UCM profiles</flag>
+    <flag name="touchbar">Install the touchbar daemon and its kernel modules</flag>
+    <flag name="discrete-gpu">Install discrete GPU control for supported models</flag>
+    <flag name="hybrid-gpu">Install hybrid GPU control for supported models</flag>
+    <flag name="kernel-patches">Stage kernel patch files for opt-in use</flag>
+    <flag name="kernel-builder">Install the Gentoo-native kernel helper</flag>
+  </use>
+  <upstream><remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id></upstream>
 </pkgmetadata>

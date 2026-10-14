@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Fast structural checks; not a replacement for emerge or hardware tests."""
+from pathlib import Path
+import re
+import subprocess
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+rust = ("t2-fan-control","t2-force-click","t2-smc-control","t2-power-explorer",
+        "t2-zone-power","t2-dgpu-control","t2-hybrid-gpu-control",
+        "kait2en-touchbar","t2-journal","t2-ave","t2-touchid")
+other = ("t2-power-tune","kait2en-assets","t2-dsp","t2-alsa-ucm","t2-services-common","t2-kernel-builder")
+modules = ("hid-t2magicmouse","t2-precision-trackpad","t2-trackpad-actuator",
+           "t2bdrm","t2gmux","t2mfi-fastcharge","t2sbs","t2sep","t2smc",
+           "t2smp","t2thunderbolt","t2touchbar","t2bce-stack")
+expected = {f"app-misc/{name}" for name in (*rust,*other,"kait2en")}
+expected |= {f"sys-kernel/kait2en-{name}" for name in modules}
+expected.add("sys-kernel/kait2en-kernel-patches")
+actual = set()
+for ebuild in ROOT.glob("*/*/*.ebuild"):
+    package = ebuild.parent.relative_to(ROOT).as_posix()
+    actual.add(package)
+    data = ebuild.read_text()
+    assert re.search(r"^EAPI=8$", data, re.M), ebuild
+    assert "src_install()" in data or package != "app-misc/kait2en", ebuild
+    assert "/opt/kait2en" not in data, ebuild
+    assert "install.sh" not in data, ebuild
+    assert "systemctl enable" not in data, ebuild
+    assert "dkms install" not in data, ebuild
+    assert package == "app-misc/t2-kernel-builder" or "KEYWORDS=\"\"" in data, ebuild
+    assert list(ebuild.parent.glob("metadata.xml")), ebuild
+    subprocess.run(["bash", "-n", str(ebuild)], check=True)
+    ET.parse(ebuild.parent / "metadata.xml")
+assert actual == expected, f"missing={expected-actual}, extra={actual-expected}"
+for package in (*rust,):
+    eb = (ROOT / "app-misc" / package / f"{package}-9999.ebuild").read_text()
+    assert "cargo_live_src_unpack" in eb and "cargo_src_install" in eb, package
+for package in modules:
+    name = f"kait2en-{package}"
+    eb = (ROOT / "sys-kernel" / name / f"{name}-9999.ebuild").read_text()
+    assert "linux-mod-r1" in eb and "KV_OUT_DIR" in eb and "modules_post_process" in eb, name
+meta = (ROOT / "app-misc/kait2en/kait2en-9999.ebuild").read_text()
+for package in expected - {"app-misc/kait2en"}:
+    if package == "app-misc/t2-power-tune":
+        continue  # separately installable, not in the default metapackage
+    assert package in meta, f"metapackage missing {package}"
+assert "?? ( discrete-gpu hybrid-gpu )" in meta
+print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

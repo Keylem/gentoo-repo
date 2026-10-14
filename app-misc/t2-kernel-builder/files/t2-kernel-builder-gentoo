@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Gentoo-side companion to KaiT2en's Fedora-oriented graphical kernel builder.
+# Intentionally defers compilation, installation, signing, and initramfs hooks to Portage.
+set -euo pipefail
+usage() {
+    cat <<'EOF'
+KaiT2en Gentoo kernel helper
+Usage: t2-kernel-builder {status|build|patches|help}
+
+status   Display Gentoo kernel selection and patch/config locations
+build    Call Portage to build sys-kernel/gentoo-kernel (root only)
+patches  Explain how to opt into the version-specific upstream patch series
+
+This is a Gentoo-native CLI, not the upstream Fedora/Koji graphical builder.
+Never use Fedora's build.sh, RPM installers, or DKMS against a Gentoo kernel.
+EOF
+}
+case "${1:-help}" in
+    status)
+        command -v eselect >/dev/null && eselect kernel list || true
+        printf 'Kernel config snippets: /etc/kernel/config.d/*.config\n'
+        printf 'User patches: /etc/portage/patches/sys-kernel/gentoo-kernel/\n'
+        printf 'Installed patch sets: /usr/share/kait2en/kernel-patches/\n'
+        ;;
+    patches)
+        printf '%s\n' 'Upstream GPU runtime patch series is kernel-version-specific.'
+        printf '%s\n' 'Inspect /usr/share/kait2en/kernel-patches/gpu-runtime-pm/series.'
+        printf '%s\n' 'For a compatible Gentoo source build, explicitly copy the numbered patches into'
+        printf '%s\n' '/etc/portage/patches/sys-kernel/gentoo-kernel/ after reviewing applicability.'
+        printf '%s\n' 'Portage then applies them via eapply_user during source preparation.'
+        ;;
+    build)
+        if (( EUID != 0 )); then
+            echo "Run the build command as root using your preferred privilege tool." >&2
+            exit 1
+        fi
+        exec emerge --ask --verbose sys-kernel/gentoo-kernel
+        ;;
+    help|-h|--help) usage ;;
+    *) usage >&2; exit 2 ;;
+esac
