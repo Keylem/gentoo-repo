@@ -100,10 +100,12 @@ stage() {
     (( EUID == 0 )) || die 'Run stage with sudo/root'
     [[ $# == 1 && -f $1 && ! -L $1 ]] || die 'Provide an ordinary firmware.tar path'
     python3 "$VALIDATOR" "$1" || die 'Unacceptable Broadcom firmware archive'
-    mkdir -p -m 0700 -- "$(dirname "$STAGED")"
+    # src_unpack may run with FEATURES=userpriv as the 'portage' user.
+    # Restrict firmware to root and the Portage build group, never the world.
+    install -d -o root -g portage -m 0750 -- "$(dirname "$STAGED")"
     local temp
     temp=$(mktemp "${STAGED}.XXXXXXXX")
-    install -m 0600 -- "$1" "$temp"
+    install -o root -g portage -m 0640 -- "$1" "$temp"
     mv -f -- "$temp" "$STAGED"
     echo 'Staged for Portage. Run: sudo emerge -av sys-firmware/kait2en-wifi-firmware'
 }
