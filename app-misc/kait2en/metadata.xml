@@ -10,6 +10,8 @@
     <flag name="touchbar">Install the touchbar daemon and its kernel modules</flag>
     <flag name="discrete-gpu">Install discrete GPU control for supported models</flag>
     <flag name="hybrid-gpu">Install hybrid GPU control for supported models</flag>
+    <flag name="kernel-sources">Install Gentoo kernel sources and a separate optional T2 patch toolkit</flag>
+    <flag name="kernel-zfs">Install the Gentoo source-built distribution kernel and matching OpenZFS modules</flag>
     <flag name="openzfs">Pull Gentoo's OpenZFS package (kernel support must be checked independently)</flag>
     <flag name="kernel-patches">Stage kernel patch files for opt-in use</flag>
     <flag name="kernel-builder">Install the Gentoo-native kernel helper</flag>

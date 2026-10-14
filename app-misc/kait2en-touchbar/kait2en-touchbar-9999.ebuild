@@ -19,6 +19,7 @@ RESTRICT="test"
 S="${EGIT_CHECKOUT_DIR}/apps/t2-touchbar"
 
 RDEPEND="
+    acct-group/kait2en-touchbar
     
     
     

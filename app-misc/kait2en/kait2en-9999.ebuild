@@ -6,8 +6,8 @@ HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="metapackage"
 SLOT="0"
 KEYWORDS=""
-IUSE="+apps drivers services dsp alsa touchbar discrete-gpu hybrid-gpu kernel-patches kernel-builder openzfs"
-REQUIRED_USE="?? ( discrete-gpu hybrid-gpu )"
+IUSE="+apps drivers services dsp alsa touchbar discrete-gpu hybrid-gpu kernel-patches kernel-builder openzfs kernel-sources kernel-zfs"
+REQUIRED_USE="?? ( discrete-gpu hybrid-gpu ) ?? ( kernel-sources kernel-zfs )"
 S="${WORKDIR}"
 RDEPEND="
     apps? (
@@ -49,5 +49,7 @@ RDEPEND="
     kernel-patches? ( sys-kernel/kait2en-kernel-patches )
     kernel-builder? ( app-misc/t2-kernel-builder )
     openzfs? ( sys-fs/zfs )
+    kernel-sources? ( sys-kernel/kait2en-sources )
+    kernel-zfs? ( sys-kernel/kait2en-kernel-openzfs )
 "
 src_install() { :; }

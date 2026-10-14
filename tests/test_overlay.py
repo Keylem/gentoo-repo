@@ -16,6 +16,7 @@ modules = ("hid-t2magicmouse","t2-precision-trackpad","t2-trackpad-actuator",
 expected = {f"app-misc/{name}" for name in (*rust,*other,"kait2en")}
 expected |= {f"sys-kernel/kait2en-{name}" for name in modules}
 expected.add("sys-kernel/kait2en-kernel-patches")
+expected.update(("sys-kernel/kait2en-sources", "sys-kernel/kait2en-kernel-openzfs", "acct-group/kait2en-touchbar"))
 actual = set()
 for ebuild in ROOT.glob("*/*/*.ebuild"):
     package = ebuild.parent.relative_to(ROOT).as_posix()
@@ -27,7 +28,7 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     assert "install.sh" not in data, ebuild
     assert "systemctl enable" not in data, ebuild
     assert "dkms install" not in data, ebuild
-    assert package == "app-misc/t2-kernel-builder" or "KEYWORDS=\"\"" in data, ebuild
+    assert package in ("app-misc/t2-kernel-builder", "sys-kernel/kait2en-sources", "sys-kernel/kait2en-kernel-openzfs", "acct-group/kait2en-touchbar") or "KEYWORDS=\"\"" in data, ebuild
     assert list(ebuild.parent.glob("metadata.xml")), ebuild
     subprocess.run(["bash", "-n", str(ebuild)], check=True)
     ET.parse(ebuild.parent / "metadata.xml")
@@ -41,11 +42,18 @@ for package in modules:
     assert "linux-mod-r1" in eb and "KV_OUT_DIR" in eb and "modules_post_process" in eb, name
 meta = (ROOT / "app-misc/kait2en/kait2en-9999.ebuild").read_text()
 for package in expected - {"app-misc/kait2en"}:
-    if package == "app-misc/t2-power-tune":
+    if package in ("app-misc/t2-power-tune", "acct-group/kait2en-touchbar"):
         continue  # separately installable, not in the default metapackage
     assert package in meta, f"metapackage missing {package}"
 assert "?? ( discrete-gpu hybrid-gpu )" in meta
 assert "openzfs? ( sys-fs/zfs )" in meta
+assert "kernel-sources? ( sys-kernel/kait2en-sources )" in meta
+assert "kernel-zfs? ( sys-kernel/kait2en-kernel-openzfs )" in meta
+assert "?? ( kernel-sources kernel-zfs )" in meta
+assert "acct-group/kait2en-touchbar" in (ROOT / "app-misc/kait2en-touchbar/kait2en-touchbar-9999.ebuild").read_text()
+for name in ("t2-force-click", "t2-smc-control", "t2-zone-power"):
+    eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
+    assert "sys-kernel/kait2en-" in eb, name
 for name in ("t2-fan-control", "t2-force-click", "t2-smc-control", "t2-zone-power", "t2-dgpu-control", "t2-ave", "t2-touchid", "t2-services-common", "kait2en-touchbar", "t2-power-tune"):
     eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
     assert "kait2en_systemd_pkg_prerm" in eb, name
@@ -57,4 +65,11 @@ for name in ("t2-fan-control", "t2-force-click", "t2-smc-control", "t2-power-exp
 for name in ("kait2en-touchbar", "t2-dsp"):
     eb = (ROOT / "app-misc" / name / f"{name}-9999.ebuild").read_text()
     assert "udev_reload" in eb, name
+doc = (ROOT / "docs/INSTALL-AND-USE.md").read_text()
+for package in expected:
+    if package != "acct-group/kait2en-touchbar":
+        assert package.split("/")[-1] in doc, f"Not documented: {package}"
+cli = (ROOT / "app-misc/t2-kernel-builder/files/t2-kernel-builder-gentoo").read_text()
+for command in ("sources", "build-zfs", "verify-zfs", "status"):
+    assert command in cli
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

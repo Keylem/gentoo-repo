@@ -143,3 +143,28 @@ The optional `app-misc/t2-kernel-builder` does not force installation or replace
 of an existing kernel: its `build` command explicitly starts an `emerge
 sys-kernel/gentoo-kernel` transaction. Inspect the proposed install plan
 before agreeing, particularly when using ZFS-root or a custom kernel.
+
+## New kernel-source and OpenZFS entry points
+
+This overlay offers two **explicitly selected** Portage paths:
+
+- `sys-kernel/kait2en-sources` installs Gentoo's `sys-kernel/gentoo-sources`
+  along with KaiT2en's version-specific patch toolkit. Source patches are
+  opt-in, not baked into the installed sources; after checking the patch
+  applicability, place only the appropriate patches in
+  `/etc/portage/patches/sys-kernel/gentoo-sources/` before re-emerging sources.
+  Build a custom kernel using Gentoo's documented manual/genkernel workflow.
+- `sys-kernel/kait2en-kernel-openzfs` installs Gentoo's **source-built**
+  `sys-kernel/gentoo-kernel` and `sys-fs/zfs[modules,dist-kernel]`. This
+  produces a matching external OpenZFS module via Portage; it does **not**
+  compile OpenZFS into the Linux source tarball. For patched builds, validate
+  first and apply patches via Portage's `eapply_user` directory for
+  `sys-kernel/gentoo-kernel` before emerging the metapackage.
+
+The `t2-kernel-builder` CLI supports `sources`, `build`, `build-zfs`,
+`status`, `patches`, and `verify-zfs KERNEL_RELEASE`. It is **not** the
+Fedora/Koji graphical application. The installed patch series is experimental;
+**no available evidence validates it against every Gentoo kernel or OpenZFS
+release**. For ZFS-root systems, verify the kernel, zfs.ko, initramfs,
+bootloader and an older bootable entry before rebooting. Consult the full
+per-application guide at [docs/INSTALL-AND-USE.md](docs/INSTALL-AND-USE.md).
