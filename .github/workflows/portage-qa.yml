@@ -1,0 +1,43 @@
+name: Gentoo systemd Portage dependency QA
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "fix/**"
+  workflow_dispatch:
+
+jobs:
+  gentoo-portage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate every package atom in systemd Gentoo stage3
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/var/db/repos/keylem:ro" \
+            gentoo/stage3:systemd bash -euo pipefail -c '
+              mkdir -p /etc/portage/repos.conf /etc/portage/package.accept_keywords
+              printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
+              echo ":: Downloading current Gentoo ebuild tree"
+              emerge-webrsync
+              : > /etc/portage/package.accept_keywords/kait2en
+              for ebuild in /var/db/repos/keylem/*/*/*.ebuild; do
+                atom="${ebuild#/var/db/repos/keylem/}"
+                atom="${atom%/*}"
+                printf "%s **\n" "${atom}" >> /etc/portage/package.accept_keywords/kait2en
+              done
+              echo ":: Portage pretend plans, one independent package at a time"
+              while IFS= read -r atom; do
+                [[ -n ${atom} ]] || continue
+                echo ":: Checking ${atom}"
+                if ! emerge --pretend --oneshot --verbose "${atom}" > /tmp/kait2en-plan 2>&1; then
+                  cat /tmp/kait2en-plan
+                  exit 1
+                fi
+              done < <(sed "s/ \*\*$//" /etc/portage/package.accept_keywords/kait2en | sort -u)
+              echo ":: Checking all default metapackage dependencies"
+              emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 || { cat /tmp/kait2en-plan; exit 1; }
+              echo "PASS: Portage resolved independently installable package metadata and default metapackage"
+            '
