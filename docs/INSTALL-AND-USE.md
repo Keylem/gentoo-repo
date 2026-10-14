@@ -365,3 +365,27 @@ suspend, Touch ID and device permissions. For the kernel+OpenZFS
 combination, validate the **exact** ZFS version against the **exact**
 kernel headers/source/config and your ZFS-root recovery path. A static
 QA pass alone is not a 100% compatibility certification.
+
+## Appendix: exact Portage atoms for optional drivers and kernels
+
+The following names can be passed directly to `emerge -av`. Install only
+what your hardware requires; this is not a command to install everything:
+
+```text
+sys-kernel/kait2en-hid-t2magicmouse
+sys-kernel/kait2en-t2-precision-trackpad
+sys-kernel/kait2en-t2-trackpad-actuator
+sys-kernel/kait2en-t2bce-stack
+sys-kernel/kait2en-t2bdrm
+sys-kernel/kait2en-t2gmux
+sys-kernel/kait2en-t2mfi-fastcharge
+sys-kernel/kait2en-t2sbs
+sys-kernel/kait2en-t2sep
+sys-kernel/kait2en-t2smc
+sys-kernel/kait2en-t2smp
+sys-kernel/kait2en-t2thunderbolt
+sys-kernel/kait2en-t2touchbar
+sys-kernel/kait2en-kernel-patches
+sys-kernel/kait2en-sources
+sys-kernel/kait2en-kernel-openzfs
+```
