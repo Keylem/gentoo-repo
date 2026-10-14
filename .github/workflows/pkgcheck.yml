@@ -16,6 +16,7 @@ jobs:
               mkdir -p /etc/portage/repos.conf
               printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
               emerge-webrsync
+              printf "[gentoo]\\nlocation = /var/db/repos/gentoo\\nauto-sync = no\\n" > /etc/portage/repos.conf/gentoo.conf
               emerge --ask=n --oneshot --quiet dev-util/pkgcheck
               pkgcheck scan --repo=keylem --exit
             '
