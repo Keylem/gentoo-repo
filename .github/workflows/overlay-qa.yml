@@ -11,13 +11,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Validate ebuilds, metadata and metapackage
-        run: python3 tests/test_overlay.py
+        run: python3 metadata/tests/test_overlay.py
       - name: Check repository metadata and shell syntax
         shell: bash
         run: |
           test "$(cat profiles/repo_name)" = "keylem"
           grep -qx 'repo-name = keylem' metadata/layout.conf
           find app-misc sys-kernel -name '*.ebuild' -print0 | xargs -0 -r -n 1 bash -n
-      - run: bash tests/test_service_lifecycle.sh
-      - run: bash tests/test_kernel_preflight.sh
+      - run: bash metadata/tests/test_service_lifecycle.sh
+      - run: bash metadata/tests/test_kernel_preflight.sh
       - run: find eclass tests sys-kernel/kait2en-kernel-patches/files -type f \( -name '*.sh' -o -name '*.eclass' -o -name 'kait2en-kernel-preflight' \) -exec bash -n '{}' +

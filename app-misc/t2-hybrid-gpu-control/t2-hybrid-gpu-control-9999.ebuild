@@ -6,7 +6,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd xdg
+inherit cargo git-r3 xdg
 
 DESCRIPTION="Hybrid GPU controls for supported T2 MacBook models"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"

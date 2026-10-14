@@ -6,7 +6,7 @@ import subprocess
 import tarfile
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 validator = ROOT / "sys-firmware/kait2en-wifi-firmware/files/validate.py"
 
 def archive(path, entries):

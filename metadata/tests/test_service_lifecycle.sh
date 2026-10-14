@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Mock test: upgrade must never disable a service; final unmerge should.
 set -euo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "${tmp}"' EXIT
 log=${tmp}/calls

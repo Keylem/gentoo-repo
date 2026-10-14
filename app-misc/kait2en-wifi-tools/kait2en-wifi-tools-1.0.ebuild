@@ -1,6 +1,10 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 EAPI=8
+
+PYTHON_COMPAT=( python3_{12..14} )
+inherit python-single-r1
+REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 DESCRIPTION="User-initiated macOS Recovery Broadcom Wi-Fi firmware extractor for T2 Macs"
 HOMEPAGE="https://github.com/Keylem/gentoo-repo"
 LICENSE="GPL-3+"
@@ -8,7 +12,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 S="${WORKDIR}"
 RDEPEND="
-    dev-lang/python
+    ${PYTHON_DEPS}
     dev-util/dmg2img
     net-misc/curl
     app-admin/sudo

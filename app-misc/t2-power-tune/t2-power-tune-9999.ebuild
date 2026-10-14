@@ -5,7 +5,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit git-r3 systemd kait2en-systemd xdg
+inherit git-r3 kait2en-systemd xdg
 DESCRIPTION="Power management tuning GUI for Apple T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="GPL-3+"

@@ -5,7 +5,7 @@ import re
 import subprocess
 import xml.etree.ElementTree as ET
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 rust = ("t2-fan-control","t2-force-click","t2-smc-control","t2-power-explorer",
         "t2-zone-power","t2-dgpu-control","t2-hybrid-gpu-control",
         "kait2en-touchbar","t2-journal","t2-ave","t2-touchid")

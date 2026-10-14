@@ -1,3 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata><upstream><remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id></upstream></pkgmetadata>
+<pkgmetadata><use><flag name="openzfs">Include optional OpenZFS external kernel module package</flag></use><upstream><remote-id type="github">Keylem/KaiT2en-Gentoo</remote-id></upstream></pkgmetadata>
