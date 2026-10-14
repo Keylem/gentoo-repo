@@ -5,7 +5,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit git-r3 systemd kait2en-systemd
+inherit git-r3 systemd kait2en-systemd xdg
 DESCRIPTION="Power management tuning GUI for Apple T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 LICENSE="GPL-3+"
@@ -33,12 +33,14 @@ src_install() {
 }
 
 pkg_postinst() {
+    xdg_pkg_postinst
     kait2en_systemd_pkg_postinst
 }
 pkg_prerm() {
     kait2en_systemd_pkg_prerm
 }
 pkg_postrm() {
+    xdg_pkg_postrm
     kait2en_systemd_pkg_postrm
     if [[ -z ${REPLACED_BY_VERSION} ]]; then
         elog "If the GUI created /etc/systemd/system/kait2en-power-tune.service,"

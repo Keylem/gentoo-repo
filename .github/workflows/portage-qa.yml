@@ -28,6 +28,8 @@ jobs:
                 atom="${atom%/*}"
                 printf "%s **\n" "${atom}" >> /etc/portage/package.accept_keywords/kait2en
               done
+              mkdir -p /etc/portage/package.use
+              printf "media-libs/libglvnd X\nnet-wireless/wpa_supplicant dbus\nsys-kernel/installkernel dracut\n" > /etc/portage/package.use/kait2en-ci
               export FEATURES="${FEATURES:-} -ipc-sandbox -network-sandbox -pid-sandbox"
               echo ":: Portage pretend plans, one independent package at a time"
               failures=0

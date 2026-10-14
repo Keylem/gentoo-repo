@@ -130,3 +130,11 @@ packaging flows; do not force both. The optional `openzfs` USE flag on the
 metapackage selects `sys-fs/zfs`, but the operator still has to ensure the
 particular ZFS release supports the selected kernel. `linux-mod-r1` or a
 successful patch dry-run alone does not validate that API relationship.
+
+## Desktop and udev cache refresh
+
+The GUI ebuilds use Gentoo's `xdg.eclass` so desktop and icon caches are
+updated correctly on install, upgrade and removal. The Touch Bar and DSP
+components use `udev.eclass` to reload udev rule databases after merge
+and unmerge. This does not automatically activate/deactivate any hardware
+or restart a user's graphical session.

@@ -6,7 +6,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd kait2en-systemd
+inherit cargo git-r3 systemd kait2en-systemd udev
 
 DESCRIPTION="Userspace Touch Bar daemon for T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
@@ -54,8 +54,7 @@ src_install() {
     cargo_src_install
     systemd_douserunit "${S}/integration/systemd/user/kait2en-touchbar.service"
     systemd_dounit "${S}/integration/systemd/system/kait2en-touchbar-attach.service"
-    insinto /usr/lib/udev/rules.d
-    doins "${S}/integration/udev/99-zz-kait2en-touchbar.rules"
+    udev_dorules "${S}/integration/udev/99-zz-kait2en-touchbar.rules"
     insinto /etc/kait2en
     doins "${S}/config/touchbar.toml"
     dodoc "${S}/THIRD-PARTY-NOTICES.md"
@@ -63,6 +62,7 @@ src_install() {
 
 pkg_postinst() {
     kait2en_systemd_pkg_postinst
+    udev_reload
     elog "This also installs a user service. On each user account run systemctl --user disable --now kait2en-touchbar.service before unmerge."
 }
 
@@ -72,4 +72,5 @@ pkg_prerm() {
 
 pkg_postrm() {
     kait2en_systemd_pkg_postrm
+    udev_reload
 }

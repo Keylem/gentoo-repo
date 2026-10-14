@@ -6,7 +6,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd
+inherit cargo git-r3 systemd xdg
 
 DESCRIPTION="Power state monitoring for T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
@@ -64,6 +64,7 @@ src_install() {
 }
 
 pkg_postinst() {
+    xdg_pkg_postinst
     elog "Services are installed but intentionally not auto-enabled."
     elog "Enable only those matching your T2 Mac hardware using systemctl."
 }

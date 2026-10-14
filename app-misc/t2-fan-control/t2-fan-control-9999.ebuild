@@ -6,7 +6,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-inherit cargo git-r3 systemd kait2en-systemd
+inherit cargo git-r3 systemd xdg kait2en-systemd xdg
 
 DESCRIPTION="T2 Mac fan controls"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
@@ -66,6 +66,7 @@ src_install() {
 }
 
 pkg_postinst() {
+    xdg_pkg_postinst
     kait2en_systemd_pkg_postinst
     elog "Enable only services supported by your T2 hardware."
 }
@@ -75,5 +76,6 @@ pkg_prerm() {
 }
 
 pkg_postrm() {
+    xdg_pkg_postrm
     kait2en_systemd_pkg_postrm
 }
