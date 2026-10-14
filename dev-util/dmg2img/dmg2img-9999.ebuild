@@ -8,7 +8,7 @@ HOMEPAGE="https://github.com/Lekensteyn/dmg2img"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
-DEPEND="app-arch/bzip2 sys-libs/zlib dev-libs/openssl"
+DEPEND="app-arch/bzip2 sys-libs/zlib"
 RDEPEND="${DEPEND}"
 src_compile() {
     emake CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" dmg2img

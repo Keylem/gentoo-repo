@@ -21,7 +21,7 @@ S="${EGIT_CHECKOUT_DIR}/apps/t2-smc-control"
 RDEPEND="
     sys-kernel/kait2en-t2smc
     app-misc/kait2en-assets
-    gui-libs/gtk:4
+    >=gui-libs/gtk-4.12:4
     gui-libs/libadwaita:1
     sys-auth/polkit
     
