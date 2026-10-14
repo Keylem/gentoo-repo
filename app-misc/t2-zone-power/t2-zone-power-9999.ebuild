@@ -17,16 +17,12 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="t2-zonepowerd.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	sys-kernel/kait2en-t2smc
 	app-misc/kait2en-assets
 	gui-libs/gtk:4
 	gui-libs/libadwaita:1
 	sys-auth/polkit
-
-
-
 
 	sys-apps/systemd
 "

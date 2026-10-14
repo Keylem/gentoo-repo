@@ -17,15 +17,11 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="t2-fancontrol.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	app-misc/kait2en-assets
 	gui-libs/gtk:4
 	gui-libs/libadwaita:1
 	sys-auth/polkit
-
-
-
 
 	sys-apps/systemd
 "

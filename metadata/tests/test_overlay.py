@@ -26,6 +26,7 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     for line_number, line in enumerate(data.splitlines(), 1):
         assert not line.startswith(" "), f"{ebuild}:{line_number}: use tabs for indentation"
         assert line == line.rstrip(), f"{ebuild}:{line_number}: trailing whitespace"
+    assert "\n\n\n" not in data, f"{ebuild}: pkgcheck DoubleEmptyLine"
     declarations = {
         name: match.start() for name in ("S", "KEYWORDS", "IUSE", "RESTRICT")
         if (match := re.search(r"^" + name + r"=", data, re.M))
@@ -127,5 +128,18 @@ portage_workflow = (ROOT / ".github/workflows/portage-qa.yml").read_text()
 assert 'bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh' in portage_workflow
 assert 'echo "PASS: complete Gentoo Portage QA"' in portage_workflow
 assert "grep -Fxq 'PASS: complete Gentoo Portage QA'" in portage_workflow
+
+# Stable or ~amd64-keyworded metapackages must not require unkeyworded
+# live 9999 ebuilds. The overlay intentionally requires explicit acceptance.
+for package in ("app-misc/kait2en-wifi-tools",
+                "sys-firmware/kait2en-wifi-firmware",
+                "sys-kernel/kait2en-sources",
+                "sys-kernel/kait2en-kernel-openzfs"):
+    ebuild = next((ROOT / package).glob("*.ebuild"))
+    assert 'KEYWORDS=""' in ebuild.read_text(), f"{package}: unsafe keyword promotion"
+for package in ("app-misc/kait2en-wifi-tools", "app-misc/t2-dsp",
+                "sys-firmware/kait2en-wifi-firmware"):
+    ebuild = next((ROOT / package).glob("*.ebuild"))
+    assert "python3_{12..15}" in ebuild.read_text(), f"{package}: outdated Python compatibility"
 
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

@@ -16,13 +16,7 @@ SLOT="0"
 KEYWORDS=""
 RESTRICT="test"
 
-
 RDEPEND="
-
-
-
-
-
 
 	sys-apps/systemd
 "

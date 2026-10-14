@@ -17,7 +17,6 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="t2-force-click.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	sys-kernel/kait2en-t2-precision-trackpad
 	sys-kernel/kait2en-t2-trackpad-actuator
@@ -25,9 +24,6 @@ RDEPEND="
 	gui-libs/gtk:4
 	gui-libs/libadwaita:1
 	sys-auth/polkit
-
-
-
 
 	sys-apps/systemd
 "

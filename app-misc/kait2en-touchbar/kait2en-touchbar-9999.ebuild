@@ -17,14 +17,10 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-touchbar-attach.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	>=dev-libs/libinput-1.21
 	virtual/libudev
 	acct-group/kait2en-touchbar
-
-
-
 
 	sys-kernel/kait2en-t2touchbar
 

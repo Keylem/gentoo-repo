@@ -17,14 +17,10 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-t2-remote.service"
 RESTRICT="test"
 
-
 RDEPEND="
-
-
 
 	net-misc/networkmanager
 	sys-kernel/kait2en-t2bce-stack
-
 
 	sys-apps/systemd
 "

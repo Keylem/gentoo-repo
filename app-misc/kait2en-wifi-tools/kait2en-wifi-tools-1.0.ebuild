@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
-PYTHON_COMPAT=( python3_{12..14} )
+PYTHON_COMPAT=( python3_{12..15} )
 inherit python-single-r1
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 DESCRIPTION="User-initiated macOS Recovery Broadcom Wi-Fi firmware extractor for T2 Macs"
@@ -10,7 +10,7 @@ HOMEPAGE="https://github.com/Keylem/gentoo-repo"
 S="${WORKDIR}"
 LICENSE="GPL-3+"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 RDEPEND="
 	${PYTHON_DEPS}
 	dev-util/dmg2img

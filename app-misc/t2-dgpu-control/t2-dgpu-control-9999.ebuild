@@ -17,14 +17,11 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-dgpu-off.service kait2en-dgpu-suspend.service kait2en-amdgpu-profile.service kait2en-amdgpu-profile-resume.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	app-misc/kait2en-assets
 	gui-libs/gtk:4
 	gui-libs/libadwaita:1
 	sys-auth/polkit
-
-
 
 	!app-misc/t2-hybrid-gpu-control
 	sys-apps/systemd

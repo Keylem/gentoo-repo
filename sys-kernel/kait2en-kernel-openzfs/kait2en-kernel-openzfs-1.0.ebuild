@@ -8,7 +8,7 @@ HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
 S="${WORKDIR}"
 LICENSE="metapackage"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 RDEPEND="
 	sys-kernel/gentoo-kernel
 	>=sys-fs/zfs-2.4[dist-kernel,modules]

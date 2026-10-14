@@ -2,14 +2,14 @@
 # Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
-PYTHON_COMPAT=( python3_{12..14} )
+PYTHON_COMPAT=( python3_{12..15} )
 inherit python-any-r1
 DESCRIPTION="Locally extracted Apple Broadcom firmware for T2 Mac Wi-Fi and Bluetooth"
 HOMEPAGE="https://wiki.t2linux.org/guides/wifi-bluetooth/"
 S="${WORKDIR}/firmware"
 LICENSE="all-rights-reserved"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS=""
 RESTRICT="fetch mirror bindist strip"
 BDEPEND="${PYTHON_DEPS}"
 RDEPEND="app-misc/kait2en-wifi-tools"

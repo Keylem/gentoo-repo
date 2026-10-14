@@ -17,14 +17,11 @@ KEYWORDS=""
 IUSE="environment"
 RESTRICT="test"
 
-
 RDEPEND="
 	app-misc/kait2en-assets
 	gui-libs/gtk:4
 	gui-libs/libadwaita:1
 	sys-auth/polkit
-
-
 
 	!app-misc/t2-dgpu-control
 	sys-apps/systemd

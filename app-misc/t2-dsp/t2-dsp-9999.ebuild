@@ -5,7 +5,7 @@ EAPI=8
 EGIT_REPO_URI="https://github.com/Keylem/KaiT2en-Gentoo.git"
 EGIT_BRANCH="main"
 EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
-PYTHON_COMPAT=( python3_{12..14} )
+PYTHON_COMPAT=( python3_{12..15} )
 inherit git-r3 udev python-any-r1
 DESCRIPTION="T2 Mac DSP and WirePlumber profile integration"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"

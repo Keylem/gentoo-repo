@@ -17,17 +17,13 @@ KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-t2-touchid.service"
 RESTRICT="test"
 
-
 RDEPEND="
 	>=dev-libs/libinput-1.21
 	virtual/libudev
 
-
 	sys-auth/fprintd
 	net-misc/networkmanager
 	sys-kernel/kait2en-t2bce-stack
-
-
 
 	sys-apps/systemd
 "
