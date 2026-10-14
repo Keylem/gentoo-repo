@@ -10,76 +10,76 @@ inherit cargo git-r3 systemd kait2en-systemd
 
 DESCRIPTION="Touch ID bridge for fprintd on T2 Macs"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
+S="${EGIT_CHECKOUT_DIR}/t2-services/t2-touchid"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
 KAIT2EN_SYSTEMD_UNITS="kait2en-t2-touchid.service"
 RESTRICT="test"
 
-S="${EGIT_CHECKOUT_DIR}/t2-services/t2-touchid"
 
 RDEPEND="
-    >=dev-libs/libinput-1.21
-    virtual/libudev
-    
-    
-    sys-auth/fprintd
-    net-misc/networkmanager
-    sys-kernel/kait2en-t2bce-stack
-    
-    
-    
-    sys-apps/systemd
+	>=dev-libs/libinput-1.21
+	virtual/libudev
+
+
+	sys-auth/fprintd
+	net-misc/networkmanager
+	sys-kernel/kait2en-t2bce-stack
+
+
+
+	sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
 src_unpack() {
-    git-r3_src_unpack
-    cargo_live_src_unpack
+	git-r3_src_unpack
+	cargo_live_src_unpack
 }
 
 src_prepare() {
-    default
-    local f
-    while IFS= read -r -d '' f; do
-        sed -i -e 's@/usr/local/@/usr/@g' "${f}" || die
-    done < <(find "${S}" -type f \( -name '*.rs' -o -name '*.py' \
-        -o -name '*.service' -o -name '*.policy' -o -name '*.desktop' \
-        -o -name '*.rules' -o -name '*.conf' -o -name '*.toml' \
-        -o -name '*.sh' -o -name '*helper' \) -print0)
+	default
+	local f
+	while IFS= read -r -d '' f; do
+		sed -i -e 's@/usr/local/@/usr/@g' "${f}" || die
+	done < <(find "${S}" -type f \( -name '*.rs' -o -name '*.py' \
+		-o -name '*.service' -o -name '*.policy' -o -name '*.desktop' \
+		-o -name '*.rules' -o -name '*.conf' -o -name '*.toml' \
+		-o -name '*.sh' -o -name '*helper' \) -print0)
 
 }
 
 src_configure() {
-    cargo_src_configure --locked
+	cargo_src_configure --locked
 }
 
 src_install() {
-    cargo_src_install
-    sed 's|@BINDIR@|/usr/bin|g' "${S}/integration/systemd/kait2en-t2-touchid.service" \
-        > "${T}/kait2en-t2-touchid.service" || die
-    systemd_dounit "${T}/kait2en-t2-touchid.service"
-    local systemunitdir
-    systemunitdir=$(systemd_get_systemunitdir) || die
-    # insinto adds EPREFIX itself, unlike systemd_get_systemunitdir.
-    insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"
-    newins "${S}/integration/fprintd/fprintd-kait2en-t2-touchid.conf" kait2en-t2-touchid.conf
-    insinto /usr/share/dbus-1/system.d
-    doins "${S}/integration/dbus/org.kait2en.TouchId.conf"
-    insinto /etc/kait2en
-    doins "${S}/config/t2-touchid.conf"
+	cargo_src_install
+	sed 's|@BINDIR@|/usr/bin|g' "${S}/integration/systemd/kait2en-t2-touchid.service" \
+		> "${T}/kait2en-t2-touchid.service" || die
+	systemd_dounit "${T}/kait2en-t2-touchid.service"
+	local systemunitdir
+	systemunitdir=$(systemd_get_systemunitdir) || die
+	# insinto adds EPREFIX itself, unlike systemd_get_systemunitdir.
+	insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"
+	newins "${S}/integration/fprintd/fprintd-kait2en-t2-touchid.conf" kait2en-t2-touchid.conf
+	insinto /usr/share/dbus-1/system.d
+	doins "${S}/integration/dbus/org.kait2en.TouchId.conf"
+	insinto /etc/kait2en
+	doins "${S}/config/t2-touchid.conf"
 }
 
 pkg_postinst() {
-    kait2en_systemd_pkg_postinst
-    elog "Enable only services supported by your T2 hardware."
+	kait2en_systemd_pkg_postinst
+	elog "Enable only services supported by your T2 hardware."
 }
 
 pkg_prerm() {
-    kait2en_systemd_pkg_prerm
+	kait2en_systemd_pkg_prerm
 }
 
 pkg_postrm() {
-    kait2en_systemd_pkg_postrm
+	kait2en_systemd_pkg_postrm
 }

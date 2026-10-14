@@ -8,11 +8,11 @@ HOMEPAGE="https://github.com/Lekensteyn/dmg2img"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
-DEPEND="app-arch/bzip2 sys-libs/zlib"
+DEPEND="app-arch/bzip2 virtual/zlib"
 RDEPEND="${DEPEND}"
 src_compile() {
-    emake CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" dmg2img
+	emake CC="$(tc-getCC)" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" dmg2img
 }
 src_install() {
-    dobin dmg2img
+	dobin dmg2img
 }

@@ -10,50 +10,50 @@ inherit cargo git-r3
 
 DESCRIPTION="Apple bridgeOS unified journal reader"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
+S="${EGIT_CHECKOUT_DIR}/t2-services/t2-journal"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
 RESTRICT="test"
 
-S="${EGIT_CHECKOUT_DIR}/t2-services/t2-journal"
 
 RDEPEND="
-    
-    
-    
-    
-    
-    
-    sys-apps/systemd
+
+
+
+
+
+
+	sys-apps/systemd
 "
 DEPEND="${RDEPEND}"
 
 src_unpack() {
-    git-r3_src_unpack
-    cargo_live_src_unpack
+	git-r3_src_unpack
+	cargo_live_src_unpack
 }
 
 src_prepare() {
-    default
-    local f
-    while IFS= read -r -d '' f; do
-        sed -i -e 's@/usr/local/@/usr/@g' "${f}" || die
-    done < <(find "${S}" -type f \( -name '*.rs' -o -name '*.py' \
-        -o -name '*.service' -o -name '*.policy' -o -name '*.desktop' \
-        -o -name '*.rules' -o -name '*.conf' -o -name '*.toml' \
-        -o -name '*.sh' -o -name '*helper' \) -print0)
+	default
+	local f
+	while IFS= read -r -d '' f; do
+		sed -i -e 's@/usr/local/@/usr/@g' "${f}" || die
+	done < <(find "${S}" -type f \( -name '*.rs' -o -name '*.py' \
+		-o -name '*.service' -o -name '*.policy' -o -name '*.desktop' \
+		-o -name '*.rules' -o -name '*.conf' -o -name '*.toml' \
+		-o -name '*.sh' -o -name '*helper' \) -print0)
 
 }
 
 src_configure() {
-    cargo_src_configure --locked
+	cargo_src_configure --locked
 }
 
 src_install() {
-    cargo_src_install
+	cargo_src_install
 }
 
 pkg_postinst() {
-    elog "Services are installed but intentionally not auto-enabled."
-    elog "Enable only those matching your T2 Mac hardware using systemctl."
+	elog "Services are installed but intentionally not auto-enabled."
+	elog "Enable only those matching your T2 Mac hardware using systemctl."
 }

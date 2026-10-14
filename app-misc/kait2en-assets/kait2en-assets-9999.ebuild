@@ -7,11 +7,11 @@ EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
 inherit git-r3
 DESCRIPTION="Shared artwork for the KaiT2en user interface"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
+S="${EGIT_CHECKOUT_DIR}/assets"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
-S="${EGIT_CHECKOUT_DIR}/assets"
 src_install() {
-    insinto /usr/share/kait2en
-    newins "${S}/kait2en-app-logo.png" kait2en-wordmark.png
+	insinto /usr/share/kait2en
+	newins "${S}/kait2en-app-logo.png" kait2en-wordmark.png
 }

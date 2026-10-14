@@ -22,6 +22,22 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     package = ebuild.parent.relative_to(ROOT).as_posix()
     actual.add(package)
     data = ebuild.read_text()
+    # pkgcheck flags space-indented and trailing-whitespace ebuild lines.
+    for line_number, line in enumerate(data.splitlines(), 1):
+        assert not line.startswith(" "), f"{ebuild}:{line_number}: use tabs for indentation"
+        assert line == line.rstrip(), f"{ebuild}:{line_number}: trailing whitespace"
+    declarations = {
+        name: match.start() for name in ("S", "KEYWORDS", "IUSE", "RESTRICT")
+        if (match := re.search(r"^" + name + r"=", data, re.M))
+    }
+    for key in ("KEYWORDS", "IUSE", "RESTRICT"):
+        if "S" in declarations and key in declarations:
+            assert declarations["S"] < declarations[key], f"{ebuild}: S must precede {key}"
+    if "IUSE" in declarations and "RESTRICT" in declarations:
+        assert declarations["IUSE"] < declarations["RESTRICT"], f"{ebuild}: IUSE must precede RESTRICT"
+    if "domenu " in data:
+        assert any("desktop" in line.split()[1:] for line in data.splitlines()
+                   if line.startswith("inherit ")), f"{ebuild}: domenu needs desktop.eclass"
     assert re.search(r"^EAPI=8$", data, re.M), ebuild
     for inherit in re.findall(r"^inherit (.*)$", data, re.M):
         classes = inherit.split()
