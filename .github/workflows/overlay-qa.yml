@@ -18,6 +18,7 @@ jobs:
           test "$(cat profiles/repo_name)" = "keylem"
           grep -qx 'repo-name = keylem' metadata/layout.conf
           find app-misc sys-kernel -name '*.ebuild' -print0 | xargs -0 -r -n 1 bash -n
+      - run: python3 metadata/tests/test_wifi_firmware.py
       - run: bash metadata/tests/test_service_lifecycle.sh
       - run: bash metadata/tests/test_kernel_preflight.sh
-      - run: find eclass tests sys-kernel/kait2en-kernel-patches/files -type f \( -name '*.sh' -o -name '*.eclass' -o -name 'kait2en-kernel-preflight' \) -exec bash -n '{}' +
+      - run: find eclass metadata/tests sys-kernel/kait2en-kernel-patches/files -type f \( -name '*.sh' -o -name '*.eclass' -o -name 'kait2en-kernel-preflight' \) -exec bash -n '{}' +
