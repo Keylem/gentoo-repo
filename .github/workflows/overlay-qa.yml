@@ -10,4 +10,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 tests/test_overlay.py
+      - name: Validate ebuilds, metadata and metapackage
+        run: python3 tests/test_overlay.py
+      - name: Check repository metadata and shell syntax
+        shell: bash
+        run: |
+          test "$(cat profiles/repo_name)" = "keylem"
+          grep -qx 'repo-name = keylem' metadata/layout.conf
+          find app-misc sys-kernel -name '*.ebuild' -print0 | xargs -0 -r -n 1 bash -n
