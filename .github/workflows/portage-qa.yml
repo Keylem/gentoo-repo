@@ -31,6 +31,10 @@ jobs:
               mkdir -p /etc/portage/package.use
               printf "media-libs/libglvnd X\nnet-wireless/wpa_supplicant dbus\nsys-kernel/installkernel dracut\nsys-apps/systemd policykit\nmedia-libs/freetype harfbuzz\nx11-libs/cairo X\nsys-fs/zfs dist-kernel modules\n" > /etc/portage/package.use/kait2en-ci
               export FEATURES="${FEATURES:-} -ipc-sandbox -network-sandbox -pid-sandbox"
+              mkdir -p /etc/portage/package.license
+              # Explicitly test the user-provided proprietary firmware package,
+              # without opening the global ACCEPT_LICENSE policy.
+              printf 'sys-firmware/kait2en-wifi-firmware all-rights-reserved\n' > /etc/portage/package.license/kait2en-wifi
               echo ":: Portage pretend plans, one independent package at a time"
               failures=0
               while IFS= read -r atom; do

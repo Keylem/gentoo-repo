@@ -118,6 +118,16 @@ If Apple no longer provides usable Sonoma recovery, try `ventura` or
 [T2 Linux Wi-Fi guide](https://wiki.t2linux.org/guides/wifi-bluetooth/)
 rather than trying a random firmware download.
 
+Apple's firmware is not free software. Gentoo requires **per-package license
+acceptance** before the final installation. Read Apple's applicable terms
+first; if you agree, configure:
+
+```sh
+sudo mkdir -p /etc/portage/package.license
+echo 'sys-firmware/kait2en-wifi-firmware all-rights-reserved' |
+    sudo tee /etc/portage/package.license/kait2en-wifi
+```
+
 After it prints the output path, **stage** that file (replace the example home
 path with yours):
 

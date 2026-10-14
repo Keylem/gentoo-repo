@@ -29,6 +29,14 @@ sudo reboot
 ```
 
 Portage installs and uninstalls the final `brcmfmac` firmware files.
+Because these are Apple-proprietary files, Portage blocks them by default.
+After reviewing Apple's terms, accept only this package's license:
+
+```sh
+sudo mkdir -p /etc/portage/package.license
+echo 'sys-firmware/kait2en-wifi-firmware all-rights-reserved' |
+    sudo tee /etc/portage/package.license/kait2en-wifi
+```
 The optional `dev-util/dmg2img` converter is provided by this overlay.
 The local generated tar archive is kept for recovery and is not deleted
 by an ebuild. Apple recovery versions, required chip variants, and
