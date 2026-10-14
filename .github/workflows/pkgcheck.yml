@@ -1,0 +1,21 @@
+name: Gentoo pkgcheck QA
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  pkgcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Gentoo ebuild/eclass metadata with pkgcheck
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/var/db/repos/keylem:ro" \
+            gentoo/stage3:systemd bash -euo pipefail -c '
+              mkdir -p /etc/portage/repos.conf
+              printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
+              emerge-webrsync
+              emerge --ask=n --oneshot --quiet dev-util/pkgcheck
+              pkgcheck scan --repo=keylem --exit
+            '
