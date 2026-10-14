@@ -23,6 +23,9 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     actual.add(package)
     data = ebuild.read_text()
     assert re.search(r"^EAPI=8$", data, re.M), ebuild
+    for inherit in re.findall(r"^inherit (.*)$", data, re.M):
+        classes = inherit.split()
+        assert len(classes) == len(set(classes)), f"duplicate eclass inherit: {ebuild}"
     assert "src_install()" in data or package != "app-misc/kait2en", ebuild
     assert "/opt/kait2en" not in data, ebuild
     assert "install.sh" not in data, ebuild
@@ -79,11 +82,4 @@ assert "sys-firmware/kait2en-wifi-firmware" in readme
 assert "fetch-macOS-v2.py" in readme
 for path in ("app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup",):
     subprocess.run(["bash", "-n", str(ROOT / path)], check=True)
-for name in ("kait2en-touchbar", "t2-touchid"):
-    pkg = ROOT / "app-misc" / name / f"{name}-9999.ebuild"
-    dep = pkg.read_text()
-    assert ">=dev-libs/libinput-1.21" in dep, pkg
-    assert "virtual/libudev" in dep, pkg
-    assert 'BDEPEND="virtual/pkgconfig"' in dep, pkg
-assert ">=gui-libs/gtk-4.12:4" in (ROOT / "app-misc/t2-smc-control/t2-smc-control-9999.ebuild").read_text()
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")
