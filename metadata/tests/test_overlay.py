@@ -22,6 +22,23 @@ for ebuild in ROOT.glob("*/*/*.ebuild"):
     package = ebuild.parent.relative_to(ROOT).as_posix()
     actual.add(package)
     data = ebuild.read_text()
+    # pkgcheck flags space-indented and trailing-whitespace ebuild lines.
+    for line_number, line in enumerate(data.splitlines(), 1):
+        assert not line.startswith(" "), f"{ebuild}:{line_number}: use tabs for indentation"
+        assert line == line.rstrip(), f"{ebuild}:{line_number}: trailing whitespace"
+    assert "\n\n\n" not in data, f"{ebuild}: pkgcheck DoubleEmptyLine"
+    declarations = {
+        name: match.start() for name in ("S", "KEYWORDS", "IUSE", "RESTRICT")
+        if (match := re.search(r"^" + name + r"=", data, re.M))
+    }
+    for key in ("KEYWORDS", "IUSE", "RESTRICT"):
+        if "S" in declarations and key in declarations:
+            assert declarations["S"] < declarations[key], f"{ebuild}: S must precede {key}"
+    if "IUSE" in declarations and "RESTRICT" in declarations:
+        assert declarations["IUSE"] < declarations["RESTRICT"], f"{ebuild}: IUSE must precede RESTRICT"
+    if "domenu " in data:
+        assert any("desktop" in line.split()[1:] for line in data.splitlines()
+                   if line.startswith("inherit ")), f"{ebuild}: domenu needs desktop.eclass"
     assert re.search(r"^EAPI=8$", data, re.M), ebuild
     for inherit in re.findall(r"^inherit (.*)$", data, re.M):
         classes = inherit.split()
@@ -85,4 +102,44 @@ for path in ("app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup",):
 power_tune = (ROOT / "app-misc/t2-power-tune/t2-power-tune-9999.ebuild").read_text()
 for native in ("gui-libs/gtk:4[introspection]", "gui-libs/libadwaita:1[introspection]", "x11-libs/gdk-pixbuf:2[introspection]"):
     assert native in power_tune
+# Portage source phases do not expose EROOT. The firmware has already been
+# staged in the host cache; it must not interpolate an undefined target root.
+firmware_ebuild = (ROOT / "sys-firmware/kait2en-wifi-firmware/kait2en-wifi-firmware-1.0.ebuild").read_text()
+firmware_unpack = firmware_ebuild.split("src_unpack() {", 1)[1].split("src_install()", 1)[0]
+assert 'local archive="/var/cache/kait2en-wifi/firmware.tar"' in firmware_unpack
+assert "${EROOT}" not in firmware_unpack and "${EROOT%/}" not in firmware_unpack
+
+# systemd_get_systemunitdir includes EPREFIX, while Portage's insinto adds
+# EPREFIX again. Strip it to avoid breaking prefix installations.
+touchid = (ROOT / "app-misc/t2-touchid/t2-touchid-9999.ebuild").read_text()
+assert 'systemunitdir=$(systemd_get_systemunitdir)' in touchid
+assert 'insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"' in touchid
+
+# A previous green Portage job was a false positive: an apostrophe inside
+# bash -c '...' terminated the script before it reached any emerge check.
+# Refuse that pattern for every Docker-based Gentoo QA workflow.
+for workflow in ("portage-qa.yml", "build-smoke.yml", "pkgcheck.yml"):
+    workflow_text = (ROOT / ".github/workflows" / workflow).read_text()
+    start = "bash -euo pipefail -c '"
+    assert workflow_text.count(start) == 1, workflow
+    embedded = workflow_text.split(start, 1)[1].split("\n            '", 1)[0]
+    assert "'" not in embedded, f"Unescaped quote can bypass {workflow}"
+portage_workflow = (ROOT / ".github/workflows/portage-qa.yml").read_text()
+assert 'bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh' in portage_workflow
+assert 'echo "PASS: complete Gentoo Portage QA"' in portage_workflow
+assert "grep -Fxq 'PASS: complete Gentoo Portage QA'" in portage_workflow
+
+# Stable or ~amd64-keyworded metapackages must not require unkeyworded
+# live 9999 ebuilds. The overlay intentionally requires explicit acceptance.
+for package in ("app-misc/kait2en-wifi-tools",
+                "sys-firmware/kait2en-wifi-firmware",
+                "sys-kernel/kait2en-sources",
+                "sys-kernel/kait2en-kernel-openzfs"):
+    ebuild = next((ROOT / package).glob("*.ebuild"))
+    assert 'KEYWORDS=""' in ebuild.read_text(), f"{package}: unsafe keyword promotion"
+for package in ("app-misc/kait2en-wifi-tools", "app-misc/t2-dsp",
+                "sys-firmware/kait2en-wifi-firmware"):
+    ebuild = next((ROOT / package).glob("*.ebuild"))
+    assert "python3_{12..15}" in ebuild.read_text(), f"{package}: outdated Python compatibility"
+
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")

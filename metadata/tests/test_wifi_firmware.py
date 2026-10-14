@@ -42,6 +42,11 @@ with tempfile.TemporaryDirectory() as tmp:
         p = subprocess.run(["python3", str(validator), str(bad)], capture_output=True)
         assert p.returncode != 0, (idx, p.stdout, p.stderr)
 helper = (ROOT / "app-misc/kait2en-wifi-tools/files/kait2en-wifi-setup").read_text()
+# Unpack can run as the unprivileged portage user. Root-only mode 0700
+# on the staging directory or 0600 on its archive would break the install.
+assert 'install -d -o root -g portage -m 0750' in helper
+assert 'install -o root -g portage -m 0640' in helper
+assert 'install -m 0600 -- "$1" "$temp"' not in helper
 assert "sha256sum --check --status" in helper
 assert "39ac6d26bd265f5d32198062f515ad15ef93afb7a74e702be2b008090d5bd5f3" in helper
 assert "c1c1d8aa25bb5f089e46ccd0d9738fc13bfbd784f499aa924466c690f059961e" in helper

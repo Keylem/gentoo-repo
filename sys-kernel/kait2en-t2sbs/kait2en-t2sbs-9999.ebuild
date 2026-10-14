@@ -10,28 +10,28 @@ inherit git-r3 linux-mod-r1
 
 DESCRIPTION="Apple T2 out-of-tree kernel drivers (t2sbs)"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
+S="${EGIT_CHECKOUT_DIR}/modules/t2sbs"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS=""
 RESTRICT="test"
-S="${EGIT_CHECKOUT_DIR}/modules/t2sbs"
 
 src_compile() {
-    # Use the kernel chosen by Gentoo, not uname -r or Fedora's kernel-devel.
-    # Building BCE as one unit keeps modpost symbol versions consistent.
-    emake "${MODULES_MAKEARGS[@]}" \
-        KDIR="${KV_OUT_DIR}" KERNEL_SRC="${KV_OUT_DIR}" \
-        KVER="${KV_FULL}" KVERSION="${KV_FULL}" all
+	# Use the kernel chosen by Gentoo, not uname -r or Fedora's kernel-devel.
+	# Building BCE as one unit keeps modpost symbol versions consistent.
+	emake "${MODULES_MAKEARGS[@]}" \
+		KDIR="${KV_OUT_DIR}" KERNEL_SRC="${KV_OUT_DIR}" \
+		KVER="${KV_FULL}" KVERSION="${KV_FULL}" all
 }
 
 src_install() {
-    linux_moduleinto extra
-    linux_domodule "${S}/t2sbs.ko"
-    modules_post_process
-    einstalldocs
+	linux_moduleinto extra
+	linux_domodule "${S}/t2sbs.ko"
+	modules_post_process
+	einstalldocs
 }
 
 pkg_postinst() {
-    linux-mod-r1_pkg_postinst
-    elog "Modules were built for ${KV_FULL}; use @module-rebuild after kernel changes."
+	linux-mod-r1_pkg_postinst
+	elog "Modules were built for ${KV_FULL}; use @module-rebuild after kernel changes."
 }

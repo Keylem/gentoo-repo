@@ -8,13 +8,13 @@ EGIT_CHECKOUT_DIR="${WORKDIR}/kait2en"
 inherit git-r3
 DESCRIPTION="ALSA UCM profiles for the Apple T2 BCE audio interface"
 HOMEPAGE="https://github.com/Keylem/KaiT2en-Gentoo"
+S="${EGIT_CHECKOUT_DIR}/modules/t2bce_audio-alsa-ucm-conf"
 LICENSE="GPL-3+"
 SLOT="0"
 KEYWORDS=""
-S="${EGIT_CHECKOUT_DIR}/modules/t2bce_audio-alsa-ucm-conf"
 RDEPEND="media-libs/alsa-ucm-conf"
 src_install() {
-    insinto /usr/share/alsa/ucm2
-    doins -r "${S}/ucm2/AppleT2" "${S}/ucm2/conf.d"
-    einstalldocs
+	insinto /usr/share/alsa/ucm2
+	doins -r "${S}/ucm2/AppleT2" "${S}/ucm2/conf.d"
+	einstalldocs
 }

@@ -4,4 +4,5 @@
 EAPI=8
 inherit acct-group
 DESCRIPTION="Device access group for the KaiT2en Touch Bar user service"
+KEYWORDS="amd64"
 ACCT_GROUP_ID=-1
