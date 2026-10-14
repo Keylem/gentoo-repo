@@ -60,7 +60,10 @@ src_install() {
     sed 's|@BINDIR@|/usr/bin|g' "${S}/integration/systemd/kait2en-t2-touchid.service" \
         > "${T}/kait2en-t2-touchid.service" || die
     systemd_dounit "${T}/kait2en-t2-touchid.service"
-    insinto "$(systemd_get_systemunitdir)/fprintd.service.d"
+    local systemunitdir
+    systemunitdir=$(systemd_get_systemunitdir) || die
+    # insinto adds EPREFIX itself, unlike systemd_get_systemunitdir.
+    insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"
     newins "${S}/integration/fprintd/fprintd-kait2en-t2-touchid.conf" kait2en-t2-touchid.conf
     insinto /usr/share/dbus-1/system.d
     doins "${S}/integration/dbus/org.kait2en.TouchId.conf"
