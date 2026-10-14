@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - "fix/**"
+      - main
   workflow_dispatch:
 
 jobs:
@@ -45,4 +45,6 @@ jobs:
               emerge --pretend --verbose --oneshot app-misc/kait2en >/tmp/kait2en-plan 2>&1 || { cat /tmp/kait2en-plan; failures=$(( failures + 1 )); }
               if (( failures > 0 )); then echo "FAIL: $failures Portage dependency plans failed" >&2; exit 1; fi
               echo "PASS: Portage resolved independently installable package metadata and default metapackage"
+              echo ":: Testing Portage install / forced reinstall / unmerge on lightweight packages"
+              bash /var/db/repos/keylem/tests/smoke_portage_lifecycle.sh
             '
