@@ -68,3 +68,7 @@ pkg_postinst() {
     elog "Services are installed but intentionally not auto-enabled."
     elog "Enable only those matching your T2 Mac hardware using systemctl."
 }
+
+pkg_postrm() {
+    xdg_pkg_postrm
+}
