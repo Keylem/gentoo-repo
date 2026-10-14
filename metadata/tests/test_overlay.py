@@ -98,4 +98,18 @@ touchid = (ROOT / "app-misc/t2-touchid/t2-touchid-9999.ebuild").read_text()
 assert 'systemunitdir=$(systemd_get_systemunitdir)' in touchid
 assert 'insinto "${systemunitdir#"${EPREFIX}"}/fprintd.service.d"' in touchid
 
+# A previous green Portage job was a false positive: an apostrophe inside
+# bash -c '...' terminated the script before it reached any emerge check.
+# Refuse that pattern for every Docker-based Gentoo QA workflow.
+for workflow in ("portage-qa.yml", "build-smoke.yml", "pkgcheck.yml"):
+    workflow_text = (ROOT / ".github/workflows" / workflow).read_text()
+    start = "bash -euo pipefail -c '"
+    assert workflow_text.count(start) == 1, workflow
+    embedded = workflow_text.split(start, 1)[1].split("\n            '", 1)[0]
+    assert "'" not in embedded, f"Unescaped quote can bypass {workflow}"
+portage_workflow = (ROOT / ".github/workflows/portage-qa.yml").read_text()
+assert 'bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh' in portage_workflow
+assert 'echo "PASS: complete Gentoo Portage QA"' in portage_workflow
+assert "grep -Fxq 'PASS: complete Gentoo Portage QA'" in portage_workflow
+
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")
