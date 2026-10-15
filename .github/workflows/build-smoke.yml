@@ -5,7 +5,7 @@ on:
 jobs:
   gentoo-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -25,9 +25,15 @@ jobs:
               mkdir -p /etc/portage/repos.conf /etc/portage/package.accept_keywords /etc/portage/package.use
               printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
               emerge-webrsync
+              # Use signed Gentoo binaries for dependencies; compile the overlay atom from source.
+              mkdir -p /etc/portage/binrepos.conf
+              printf "[kait2en-ci-gentoo]\nsync-uri = https://distfiles.gentoo.org/releases/amd64/binpackages/23.0/x86-64/\npriority = 9999\nverify-signature = true\n" > /etc/portage/binrepos.conf/kait2en-ci.conf
               echo "*/*::keylem **" > /etc/portage/package.accept_keywords/kait2en
               printf "media-libs/libglvnd X\nnet-wireless/wpa_supplicant dbus\nsys-apps/systemd policykit\nmedia-libs/freetype harfbuzz\nx11-libs/cairo X\n" > /etc/portage/package.use/kait2en
-              export FEATURES="${FEATURES:-} -network-sandbox -ipc-sandbox -pid-sandbox"
+              export FEATURES="${FEATURES:-} -network-sandbox -ipc-sandbox -pid-sandbox binpkg-request-signature"
+              emerge --ask=n --oneshot --quiet app-portage/getuto
+              getuto
+              export EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS:-} --getbinpkg --usepkg-exclude ${ATOM}"
               emerge --ask=n --verbose --oneshot --jobs=2 --load-average=2 "${ATOM}"
               echo "PASS: actual Rust build + install for ${ATOM}"
             '
