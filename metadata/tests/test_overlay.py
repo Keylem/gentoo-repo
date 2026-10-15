@@ -129,6 +129,18 @@ assert 'bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh' in 
 assert 'echo "PASS: complete Gentoo Portage QA"' in portage_workflow
 assert "grep -Fxq 'PASS: complete Gentoo Portage QA'" in portage_workflow
 
+# GTK4 and Rust dependencies compile from source in a fresh Gentoo stage3.
+# Multiple real Portage runs exhausted the old 55-minute runner deadline
+# before reaching the GTK app, so preserve enough time to test the app itself.
+build_smoke = (ROOT / ".github/workflows/build-smoke.yml").read_text()
+timeout = re.search(r"^    timeout-minutes: (\d+)$", build_smoke, re.M)
+assert timeout and 120 <= int(timeout.group(1)) <= 180, "GTK/Rust smoke timeout too short or unbounded"
+for atom in ("app-misc/t2-journal", "app-misc/t2-fan-control"):
+    assert f"          - {atom}" in build_smoke, f"missing build-smoke atom {atom}"
+assert 'emerge --ask=n --verbose --oneshot --jobs=2 --load-average=2 "${ATOM}"' in build_smoke
+assert 'echo "PASS: actual Rust build + install for ${ATOM}"' in build_smoke
+
+
 # Stable or ~amd64-keyworded metapackages must not require unkeyworded
 # live 9999 ebuilds. The overlay intentionally requires explicit acceptance.
 for package in ("app-misc/kait2en-wifi-tools",
