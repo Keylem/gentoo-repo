@@ -139,6 +139,16 @@ for atom in ("app-misc/t2-journal", "app-misc/t2-fan-control"):
     assert f"          - {atom}" in build_smoke, f"missing build-smoke atom {atom}"
 assert 'emerge --ask=n --verbose --oneshot --jobs=2 --load-average=2 "${ATOM}"' in build_smoke
 assert 'echo "PASS: actual Rust build + install for ${ATOM}"' in build_smoke
+# Binary packages accelerate upstream dependencies but never substitute for
+# the overlay application build. Reject unsigned binaries and missing trust keys.
+assert "https://distfiles.gentoo.org/releases/amd64/binpackages/23.0/x86-64/" in build_smoke
+assert "verify-signature = true" in build_smoke
+assert "binpkg-request-signature" in build_smoke
+assert "app-portage/getuto" in build_smoke
+assert "\n              getuto\n" in build_smoke
+assert '--getbinpkg --usepkg-exclude ${ATOM}' in build_smoke
+assert build_smoke.index("getuto\n") < build_smoke.index('emerge --ask=n --verbose --oneshot')
+
 
 
 # Stable or ~amd64-keyworded metapackages must not require unkeyworded
