@@ -124,6 +124,14 @@ for workflow in ("portage-qa.yml", "build-smoke.yml", "pkgcheck.yml"):
     assert workflow_text.count(start) == 1, workflow
     embedded = workflow_text.split(start, 1)[1].split("\n            '", 1)[0]
     assert "'" not in embedded, f"Unescaped quote can bypass {workflow}"
+# Run pkgcheck and the real Rust/GTK Portage build again after merge to main.
+# These jobs are PR-only otherwise, so main could drift without either check.
+for workflow in ("pkgcheck.yml", "build-smoke.yml"):
+    workflow_text = (ROOT / ".github/workflows" / workflow).read_text()
+    assert re.search(r"^  push:\n    branches:\n      - main$", workflow_text, re.M), f"{workflow}: missing post-merge main trigger"
+    assert re.search(r"^  pull_request:$", workflow_text, re.M), f"{workflow}: missing PR trigger"
+    assert re.search(r"^  workflow_dispatch:$", workflow_text, re.M), f"{workflow}: missing manual trigger"
+
 portage_workflow = (ROOT / ".github/workflows/portage-qa.yml").read_text()
 assert 'bash /var/db/repos/keylem/metadata/tests/smoke_portage_lifecycle.sh' in portage_workflow
 assert 'echo "PASS: complete Gentoo Portage QA"' in portage_workflow
