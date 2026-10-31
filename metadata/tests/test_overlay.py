@@ -172,4 +172,11 @@ for package in ("app-misc/kait2en-wifi-tools", "app-misc/t2-dsp",
     ebuild = next((ROOT / package).glob("*.ebuild"))
     assert "python3_{12..15}" in ebuild.read_text(), f"{package}: outdated Python compatibility"
 
+# GitHub began forcing Node 24 for older JavaScript actions. Keep these CI
+# workflows on Node-24-compatible major releases to avoid runtime deprecation.
+for workflow in (ROOT / ".github/workflows").glob("*.yml"):
+    workflow_text = workflow.read_text()
+    assert not re.search(r"^\\s*(?:-\\s*)?uses:\\s*actions/checkout@v[1-6](?:\\s|$)", workflow_text, re.M), f"{workflow}: outdated checkout runtime"
+    assert not re.search(r"^\\s*(?:-\\s*)?uses:\\s*actions/setup-python@v[1-6](?:\\s|$)", workflow_text, re.M), f"{workflow}: outdated setup-python runtime"
+
 print(f"PASS: {len(expected)} independently packaged atoms, valid ebuild shell/XML and metapackage refs")
