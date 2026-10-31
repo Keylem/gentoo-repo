@@ -16,7 +16,7 @@ jobs:
           - app-misc/t2-journal
           - app-misc/t2-fan-control
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Compile and install a Rust daemon or GTK app using real Gentoo Portage
         env:
           ATOM: ${{ matrix.atom }}
