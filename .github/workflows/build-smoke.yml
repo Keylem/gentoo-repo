@@ -16,7 +16,7 @@ jobs:
           - app-misc/t2-journal
           - app-misc/t2-fan-control
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Compile and install a Rust daemon or GTK app using real Gentoo Portage
         env:
           ATOM: ${{ matrix.atom }}
@@ -26,6 +26,7 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/var/db/repos/keylem:ro" \
             gentoo/stage3:systemd bash -euo pipefail -c '
               mkdir -p /etc/portage/repos.conf /etc/portage/package.accept_keywords /etc/portage/package.use
+              mkdir -p /var/db/repos/gentoo
               printf "[keylem]\nlocation = /var/db/repos/keylem\nmasters = gentoo\nauto-sync = no\n" > /etc/portage/repos.conf/keylem.conf
               emerge-webrsync
               # Use signed Gentoo binaries for dependencies; compile the overlay atom from source.
